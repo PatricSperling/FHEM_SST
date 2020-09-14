@@ -1,6 +1,6 @@
 ################################################################################
 # 48_SST.pm
-#   Version 0.7.0 (2020-09-12)
+#   Version 0.7.3 (2020-09-14)
 #
 # SYNOPSIS
 #   Samsung SmartThings Connecton Module for FHEM
@@ -34,42 +34,42 @@ my $SST_missing_modules = '';
 #            vector3: x,y,z
 #            colormap: hue,saturation
 my %SST_commands = (
-	'fridge_temperature' => [
+    'fridge_temperature' => [
         'refrigerationSetpoint',
         'setRefrigerationSetpoint',
         'number',
         '-460,10000'
-	],
-	'fridge_power_cool' => [
+    ],
+    'fridge_power_cool' => [
         'rapidCooling',
         'setRapidCooling',
         'enum',
         'off,on'
-	],
-	'freezer_power_freeze' => [
+    ],
+    'freezer_power_freeze' => [
         'rapidFreezing',
         'setRapidFreezing',
         'enum',
         'off,on'
-	],
+    ],
     'cleaner_recharge' => [
-		'robotCleanerMovement',
-		'setRobotCleanerMovement',
-		'enum',
-		'homing,idle,charging,alarm,powerOff,reserve,point,after,cleaning'
-	],
+        'robotCleanerMovement',
+        'setRobotCleanerMovement',
+        'enum',
+        'homing,idle,charging,alarm,powerOff,reserve,point,after,cleaning'
+    ],
     'cleaner_turbo' => [
-		'robotCleanerTurboMode',
-		'setRobotCleanerTurboMode',
-		'enum',
-		'on,off,silence'
-	],
+        'robotCleanerTurboMode',
+        'setRobotCleanerTurboMode',
+        'enum',
+        'on,off,silence'
+    ],
     'cleaner_mode' => [
-		'robotCleanerCleaningMode',
-		'setRobotCleanerCleaningMode',
-		'enum',
-		'auto,part,repeat,manual,stop,map'
-	],
+        'robotCleanerCleaningMode',
+        'setRobotCleanerCleaningMode',
+        'enum',
+        'auto,part,repeat,manual,stop,map'
+    ],
 );
 
 #package SmartThingsFridge;
@@ -100,16 +100,16 @@ sub SST_Initialize($) {
     #$hash->{parseParams} = 1;
 
     my @attrList = qw(
-        autocreate:0,1,2
-        autoextend_setList:1,0
-        device_id
-	    device_name
-        device_type:CONNECTOR,refrigerator,freezer,TV,washer,dryer,vacuumCleaner
-        disable:1,0
-        discard_units:0,1
-        interval
-	    IODev
-        setList
+    autocreate:0,1,2
+    autoextend_setList:1,0
+    device_id
+    device_name
+    device_type:CONNECTOR,refrigerator,freezer,TV,washer,dryer,vacuumCleaner
+    disable:1,0
+    discard_units:0,1
+    interval
+    IODev
+    setList
     );
     $hash->{AttrList} = join(" ", @attrList)." ".$readingFnAttributes;
 
@@ -129,9 +129,10 @@ sub SST_Define($$) {
     $hash->{name}                      = $aArguments[0];
     #$attr{$aArguments[0]}{token}       = $aArguments[2];
     $attr{$aArguments[0]}{device_type} = '';
-    $attr{$aArguments[0]}{interval}    = -1;
+    #$attr{$aArguments[0]}{interval}    = -1;
+    my $def_interval  = -1;
     my $tokenOrDevice = '';
-    $attr{$aArguments[0]}{device_id}   = 'unknown';
+    #$attr{$aArguments[0]}{device_id}   = 'unknown';
     $attr{$aArguments[0]}{IODev}       = '';
 
     # on more attributes - analyze and act correctly
@@ -139,8 +140,8 @@ sub SST_Define($$) {
     while( $index <= $#aArguments ){
         if( $aArguments[$index] =~ m/^[0-9]+$/ ){
             # numeric value -> interval
-            if( $attr{$aArguments[0]}{interval} == -1 ){
-                $attr{$aArguments[0]}{interval} = $aArguments[$index];
+            if( $def_interval == -1 ){
+                $def_interval = $aArguments[$index];
             }else{
                 fhem "delete $aArguments[0]";
                 return "Interval given more than once!\n$syntax";
@@ -151,7 +152,6 @@ sub SST_Define($$) {
             }
         }elsif( $aArguments[$index] =~ m/^[0-9a-f-]{36}$/ ){
             # 32 digit hexadecimal value (plus 4 -) -> device id or Samsung SmartThings Token
-            #if( $attr{$aArguments[0]}{device_id} eq 'unknown' ){
             if( $tokenOrDevice eq '' ){
                 $tokenOrDevice = $aArguments[$index];
             }else{
@@ -159,7 +159,7 @@ sub SST_Define($$) {
                 return "Device ID or token given more than once <$tokenOrDevice>/$aArguments[$index]!\n$syntax";
             }
         }elsif( $aArguments[$index] =~ m/^io[^= ]*=(.*)$/i ){
-			# option IODevice
+            # option IODevice
             if( $attr{$aArguments[0]}{IODev} eq '' ){
                 $attr{$aArguments[0]}{IODev} = $1;
             }else{
@@ -186,43 +186,43 @@ sub SST_Define($$) {
 
     # differ device types
     if( $attr{$aArguments[0]}{device_type} eq 'CONNECTOR' ){
-        $hash->{TOKEN} = $tokenOrDevice;
-        #$attr{$aArguments[0]}{token} = $tokenOrDevice;
-        $attr{$aArguments[0]}{icon}  = 'it_server';
-		delete $attr{$aArguments[0]}{IODev};
+        # if we're in a redefine, don't set any defaults
+        unless( defined $hash->{TOKEN} ){
+            $hash->{TOKEN} = $tokenOrDevice;
+            $def_interval = 86400 if $def_interval < 0;
+            $attr{$aArguments[0]}{interval} = $def_interval;
+            $attr{$aArguments[0]}{icon}  = 'it_server';
+        }
+        delete $attr{$aArguments[0]}{IODev};
         delete $attr{$aArguments[0]}{setList};
-        delete $attr{$aArguments[0]}{device_id};
-	}else{
-        $attr{$aArguments[0]}{device_id} = $tokenOrDevice if $tokenOrDevice;
-    	if( lc $attr{$aArguments[0]}{device_type} eq 'refrigerator' ){
-        	$attr{$aArguments[0]}{icon}          = 'fridge';
-         	$attr{$aArguments[0]}{setList}       = 'fridge_temperature rapidCooling:off,on rapidFreezing:off,on defrost:on,off waterFilterResetType:noArg';
-			$attr{$aArguments[0]}{stateFormat}   = "contactSensor_contact<br>temperatureMeasurement_temperature °C";
-			$attr{$aArguments[0]}{discard_units} = 1;
-    	}elsif( lc $attr{$aArguments[0]}{device_type} eq 'tv' ){
-        	$attr{$aArguments[0]}{icon}    = 'it_television';
-        	$attr{$aArguments[0]}{setList} = 'power:off,on,inbetween';
-    	}elsif( lc $attr{$aArguments[0]}{device_type} eq 'washer' ){
-        	$attr{$aArguments[0]}{icon}    = 'scene_washing_machine';
-        	$attr{$aArguments[0]}{setList} = 'washerMode:regular,heavy,rinse,spinDry state:pause,run,stop';
-    	}elsif( lc $attr{$aArguments[0]}{device_type} eq 'vacuumCleaner' ){ # TODO: is this the correct identifyer?
-        	$attr{$aArguments[0]}{icon}    = 'vacuum_top';
-        	$attr{$aArguments[0]}{setList} = 'recharge:noArg turbo:on,off,silence mode:auto,part,repeat,manual,stop,map';
-    	}else{
-			$attr{$aArguments[0]}{icon} = 'unknown';
-		}
-    }
-
-    # set interval to 1 hour (connector) or 5 minutes if unset
-    if( $attr{$aArguments[0]}{interval} == -1 ){
-        if( $attr{$aArguments[0]}{device_type} eq 'CONNECTOR' ){
-            $attr{$aArguments[0]}{interval} = 86400;
-        }else{
-            $attr{$aArguments[0]}{interval} = 300;
+    }else{
+        # if we're in a redefine, don't set any defaults
+        unless( defined $attr{$aArguments[0]}{device_id} ){
+            $def_interval = 300 if $def_interval < 0;
+            $attr{$aArguments[0]}{interval} = $def_interval;
+            $attr{$aArguments[0]}{device_id} = $tokenOrDevice if $tokenOrDevice;
+            if( lc $attr{$aArguments[0]}{device_type} eq 'refrigerator' ){
+                $attr{$aArguments[0]}{icon}          = 'fridge';
+                $attr{$aArguments[0]}{setList}       = 'fridge_temperature rapidCooling:off,on rapidFreezing:off,on defrost:on,off waterFilterResetType:noArg';
+                $attr{$aArguments[0]}{stateFormat}   = "contactSensor_contact<br>temperatureMeasurement_temperature °C";
+                $attr{$aArguments[0]}{discard_units} = 1;
+            }elsif( lc $attr{$aArguments[0]}{device_type} eq 'tv' ){
+                $attr{$aArguments[0]}{icon}    = 'it_television';
+                $attr{$aArguments[0]}{setList} = 'power:off,on,inbetween';
+            }elsif( lc $attr{$aArguments[0]}{device_type} eq 'washer' ){
+                $attr{$aArguments[0]}{icon}    = 'scene_washing_machine';
+                $attr{$aArguments[0]}{setList} = 'washerMode:regular,heavy,rinse,spinDry state:pause,run,stop';
+                $attr{$aArguments[0]}{stateFormat}   = "washerOperatingState_machineState<br>washerOperatingState_washerJobState";
+            }elsif( lc $attr{$aArguments[0]}{device_type} eq 'vacuumCleaner' ){ # TODO: is this the correct identifyer?
+                $attr{$aArguments[0]}{icon}    = 'vacuum_top';
+                $attr{$aArguments[0]}{setList} = 'recharge:noArg turbo:on,off,silence mode:auto,part,repeat,manual,stop,map';
+            }else{
+                $attr{$aArguments[0]}{icon} = 'unknown';
+            }
         }
     }
 
-    Log3 $aArguments[0], 3, "SST ($aArguments[0]): SST $attr{$aArguments[0]}{device_type} defined as $aArguments[0] ($init_done)";
+    Log3 $aArguments[0], 3, "SST ($aArguments[0]): SST $attr{$aArguments[0]}{device_type} defined as $aArguments[0]";
 
     # start timer for auto-rescan unless we're in config mode
     SST_ProcessTimer($hash) if $init_done;
@@ -261,19 +261,43 @@ sub SST_Attribute($$) {
 #####################################
 # NOTIFIES
 sub SST_Notify($$) {
-    my ($hash, $notifydevice) = @_;
-    my $name   = $hash->{NAME};
-    my $device = $notifydevice->{NAME}; # Device that created the events
-	my $events = deviceEvents($notifydevice, 1);
+    my ($hash, $notifyhash) = @_;
+    my $device    = $hash->{NAME};
+    my $notifyer  = $notifyhash->{NAME}; # Device that created the events
+    my $notifymsg = deviceEvents($notifyhash, 1);
 
-
-    # TODO: handle CONNECTOR renaming - update client devices
-
-    return undef if IsDisabled( $name );
-
-    # after configuration/startup
-    if( $device eq "global" && grep(m/^INITIALIZED|REREADCFG$/, @{$events}) ){
-        SST_ProcessTimer($hash);
+    if( $notifyer eq "global" ){
+        if( grep(m/^INITIALIZED|REREADCFG$/, @{$notifymsg}) ){
+            # after configuration/startup
+            SST_ProcessTimer($hash) unless IsDisabled( $device );
+        }elsif( grep(m/^RENAMED/, @{$notifymsg}) ){
+            my ( $task, $oldname, $newname ) = split ' ', $notifymsg->[0];
+            # renaming myself
+            if( $newname eq $device ){
+                my $msg = '';
+                if( AttrVal($device, 'device_type', 'CONNECTOR') eq 'CONNECTOR' ){
+                    # connector - update physical devices
+                    foreach my $reading ( keys %{$hash->{READINGS}} ){
+                        next unless $reading =~ /^device_/;
+                        my $physnm = $hash->{READINGS}->{$reading}->{VAL};
+                        if( $physnm ){
+                            my $physdt = AttrVal( $physnm, 'device_type', 'unknown' );
+                            my $physid = AttrVal( $physnm, 'device_id', 'unknown' );
+                            fhem( "defmod $physnm SST $physdt $physid IO=$newname" );
+                        }else{
+                            Log3 $hash, 2, "SST ($device): could not identify FHEM device name for reading $reading";
+                            $msg .= "\nCould not identify FHEM device name for reading $reading!";
+                        }
+                    }
+                    return $msg;
+                }else{
+                    # physical device - update connector
+                    my $connector = AttrVal($device, 'IODev', undef);
+                    my $device_id = AttrVal($device, 'device_id', undef);
+                    fhem( "setReading $connector device_$device_id $newname" );
+                }
+            }
+        }
     }
     return undef;
 }
@@ -377,6 +401,7 @@ sub SST_getDeviceDetection($) {
     my ($device) = @_;
     my $hash     = $defs{$device};
     return 'device detection only works on connector device' if AttrVal($device, 'device_type', 'CONNECTOR') ne 'CONNECTOR';
+    $hash->{STATE} = 'polling device list from cloud';
 
     # get list from cloud
     my $token    = $hash->{TOKEN};
@@ -387,6 +412,18 @@ sub SST_getDeviceDetection($) {
     );
     my $webagent = LWP::UserAgent->new();
     my $jsondata = $webagent->request($webget);
+
+    if( not $jsondata->content ){
+        Log3 $hash, 2, "SST ($device): status retrieval failed";
+        return "Could not obtain listing for Samsung SmartThings devices.\nPlease check your configuration.";
+        $hash->{STATE} = 'cloud connection error';
+    }elsif( $jsondata->content !~ m/^\{"/ ){
+        Log3 $hash, 2, "SST ($device): cloud did not answer with JSON:\n" . $jsondata->content;
+        return "Samsung SmartThings cloud did not return valid JSON data string.\nPlease check log file for detailed information if this error repeats.";
+        $hash->{STATE} = 'cloud return data error';
+    }
+    #Log3 $hash, 5, "SST ($device): JSON data?: " . substr( $jsondata->content, 0, 40 ) . "...";
+
     my $items    = decode_json($jsondata->content);
     my $count    = scalar @{ $items->{items}};
     my $msg      = '';
@@ -443,16 +480,16 @@ sub SST_getDeviceDetection($) {
                     $tmpname =~ s/^(.{12}).*$/SST_$1/;
                 }
 
-				# try to determine the device type
+                # try to determine the device type
                 my $subdevicetype = 'unknown';
-				if( $items->{items}[$i]->{name} =~ m/^\[(.*)\]/ ){
-					$subdevicetype = lc($1);
-				}elsif( $items->{items}[$i]->{deviceTypeName} =~ m/ OCF (.*)$/ ){
-					$subdevicetype = lc($1);
-				}else{
+                if( $items->{items}[$i]->{name} =~ m/^\[(.*)\]/ ){
+                    $subdevicetype = lc($1);
+                }elsif( $items->{items}[$i]->{deviceTypeName} =~ m/ OCF (.*)$/ ){
+                    $subdevicetype = lc($1);
+                }else{
                     $msg .= "cannot determine device type from name (" . $items->{items}[$i]->{name} . ") or deviceTypeName (" . $items->{items}[$i]->{deviceTypeName} . ").";
-					Log3 $hash, 2, "SST ($device): cannot determine device type from name (" . $items->{items}[$i]->{name} . ") or deviceTypeName (" . $items->{items}[$i]->{deviceTypeName} . ").";
-				}
+                    Log3 $hash, 2, "SST ($device): cannot determine device type from name (" . $items->{items}[$i]->{name} . ") or deviceTypeName (" . $items->{items}[$i]->{deviceTypeName} . ").";
+                }
 
                 # create new device
                 # TODO: token rausschmeißen
@@ -460,7 +497,7 @@ sub SST_getDeviceDetection($) {
                 fhem( "define $tmpname SST $subdevicetype IO=$device" );
                 if( AttrVal($tmpname, 'device_type', undef) ){
                     $msg .= " - newly created as $tmpname";
-					fhem "attr $tmpname device_id " . $items->{items}[$i]->{deviceId};
+                    fhem "attr $tmpname device_id " . $items->{items}[$i]->{deviceId};
                     fhem "attr $tmpname device_name " . $items->{items}[$i]->{name};
                     unless( readingsSingleUpdate($hash, "device_$deviceId", "$tmpname", 1) ){
                         Log3 $hash, 3, "SST ($device): updating reading for $deviceId failed - disabling autocreate";
@@ -479,6 +516,7 @@ sub SST_getDeviceDetection($) {
     # reset autocreate to 1 (create new devices only)
     $attr{$device}{autocreate} = 1 if AttrNum( $device, 'autocreate', 0) == 2;
     readingsSingleUpdate($hash, 'lastrun', FmtDateTime(time()), 1);
+    $hash->{STATE} = 'connection idle';
     return $msg;
 }
 
@@ -495,7 +533,6 @@ sub SST_getDeviceStatus($) {
     }else{
         my $connector = AttrVal($device, 'IODev', undef);
         return "Could not identify IO Device for $device - please check configuration." unless $connector;
-        # wie zur hölle komm ich da ran
         $token = InternalVal( $connector, 'TOKEN', undef );
     }
     return "Could not identify Samsung SmartThings token for $device - please check configuration." unless $token;
@@ -507,12 +544,18 @@ sub SST_getDeviceStatus($) {
     );
     my $webagent = LWP::UserAgent->new();
     my $jsondata = $webagent->request($webget);
-    unless( $jsondata->content){
-        Log3 $hash, 3, "SST ($device): status retrieval failed";
+    if( not $jsondata->content ){
+        Log3 $hash, 2, "SST ($device): status retrieval failed";
         return "Could not obtain status for Samsung SmartThings Device $device.\nPlease check your configuration.";
+        $hash->{STATE} = 'cloud connection error';
+    }elsif( $jsondata->content !~ m/^\{"/ ){
+        Log3 $hash, 2, "SST ($device): cloud did not answer with JSON:\n" . $jsondata->content;
+        return "Samsung SmartThings cloud did not return valid JSON data string.\nPlease check log file for detailed information if this error repeats.";
+        $hash->{STATE} = 'cloud return data error';
     }
+    #Log3 $hash, 3, "SST ($device): JSON data?: " . substr( $jsondata->content, 0, 40 ) . "...";
     my $jsonhash = decode_json($jsondata->content);
-#Log3 $hash, 5, "SST ($device): JSON STRUCT (device status):\n".Dumper($jsonhash);
+    #Log3 $hash, 5, "SST ($device): JSON STRUCT (device status):\n".Dumper($jsonhash);
     #if( AttrNum($device, 'verbose', 0) >= 5 ){
     #my $jsondump = $jsondata->content;
     #$jsondump =~ s/[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/g;
@@ -525,8 +568,9 @@ sub SST_getDeviceStatus($) {
     my %readings = ();
 
     # parse JSON struct
+    Log3 $hash, 4, "SST ($device): parsing received JSON data";
     foreach my $level_0 ( keys %{ $jsonhash } ){
-        Log3 $hash, 4, "SST ($device): Key0: $level_0";
+        #Log3 $hash, 4, "SST ($device): Key0: $level_0";
         next if $level_0 eq 'execute';
         if( $level_0 eq 'custom.disabledCapabilities' ){
             push( @disabled, @{ $jsonhash->{'custom.disabledCapabilities'}->{disabledCapabilities}->{value} } ) if defined $jsonhash->{'custom.disabledCapabilities'}->{disabledCapabilities}->{value};
@@ -534,7 +578,7 @@ sub SST_getDeviceStatus($) {
         }
         if( ref $jsonhash->{$level_0} eq 'HASH' ){
             foreach my $level_1 ( keys %{ $jsonhash->{$level_0} } ){
-                Log3 $hash, 4, "SST ($device): Key1: $level_0 -> $level_1";
+                #Log3 $hash, 4, "SST ($device): Key1: $level_0 -> $level_1";
                 if( ref $jsonhash->{$level_0}->{$level_1} eq 'HASH' ){
                     if( defined $jsonhash->{$level_0}->{$level_1}->{value} ){
                         my $reading = makeReadingName( $level_0 . '_' . $level_1 );
@@ -544,7 +588,10 @@ sub SST_getDeviceStatus($) {
                             push @setListHints, "$level_0:" . join( ',', @{ $jsonhash->{$level_0}->{$level_1}->{value} } );
                             next;
                         }
-                        $thisvalue = $jsonhash->{$level_0}->{$level_1}->{value};
+                        $thisvalue = $jsonhash->{$level_0}->{$level_1}->{value}; # hope this works, can't verify myself
+                        if( $thisvalue =~ m/^([0-9]{4})-([0-9]{2})-([0-9]{2})T([012][0-9]):([0-5][0-9]):([0-5][0-9])\..*Z/ ){
+                            $thisvalue = FmtDateTime( fhemTimeGm( $6, $5, $4, $3, $2 - 1, $1 - 1900 ) );
+                        }
                         if( exists $jsonhash->{$level_0}->{$level_1}->{unit} and not $nounits ){
                             $readings{$reading} = $jsonhash->{$level_0}->{$level_1}->{value} . ' ' . $jsonhash->{$level_0}->{$level_1}->{unit};
                         }else{
@@ -674,7 +721,7 @@ sub SST_sendCommand($@) {
     # fuckfuckfuck, warum geht der dreck nicht :(
 
     my $jsoncmd = encode_utf8(encode_json($data));
-my $msg = "==== command:\n$jsoncmd\n";
+    my $msg = "==== command:\n$jsoncmd\n";
     Log3 $hash, 5, "SST ($device): JSON STRUCT (device set $capa):\n" . $jsoncmd;
 
     # push command into cloud
@@ -691,13 +738,13 @@ my $msg = "==== command:\n$jsoncmd\n";
         return "Could not set $capa for Samsung SmartThings Device $device.";
     }
     #my $jsonhash = decode_json($jsondata->content);
-#Log3 $hash, 5, "SST ($device): JSON STRUCT (device set $capa):\n" . Dumper($jsonhash);
+    #Log3 $hash, 5, "SST ($device): JSON STRUCT (device set $capa):\n" . Dumper($jsonhash);
     my $jsondump = $jsondata->content;
     $jsondump =~ s/[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/g;
     Log3 $hash, 5, "SST ($device): JSON STRUCT (device set $capa reply):\n$jsondump";
-$msg .= "==== reply\n$jsondump\n";
+    $msg .= "==== reply\n$jsondump\n";
 
-return $msg;
+    return $msg;
     SST_getDeviceStatus($hash->{NAME});
     return undef;
 }
@@ -711,6 +758,7 @@ return $msg;
 =item summary    Integration of Samsung SmartThings devices
 =item summary_DE Einbindung von Samsung SmartThings Geräten
 =begin html
+
 <br>
 <a name="SST"></a>
 <h3>SST - Samsung SmartThings Connector</h3>
@@ -865,6 +913,7 @@ return $msg;
 =end html
 
 =begin html_DE
+
 <br>
 <a name="SST"></a>
 <h3>SST - Samsung SmartThings Connector</h3>
