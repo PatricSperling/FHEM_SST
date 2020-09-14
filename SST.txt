@@ -1,0 +1,8 @@
+DEL ./FHEM/48_SST.pm
+UPD 2020-09-14_21:39:42 45975 ./FHEM/48_SST.pm
+DEL ./images/fhemSVG/Samsung_SideBySide.svg
+UPD 2020-08-26_14:38:40 6938 ./images/fhemSVG/Samsung_SideBySide.svg
+DEL ./images/fhemSVG/Samsung_SmartThings.svg
+UPD 2020-09-12_23:58:57 1257 ./images/fhemSVG/Samsung_SmartThings.svg
+DEL ./images/fhemSVG/Samsung.svg
+UPD 2020-08-25_22:50:25 4907 ./images/fhemSVG/Samsung.svg
