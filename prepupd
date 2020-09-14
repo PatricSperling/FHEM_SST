@@ -4,7 +4,12 @@ while read newfile ; do
 	echo "DEL ${newfile}"
 	echo "UPD $( date -r ${newfile} +%F_%T ) $( stat -c %s ${newfile} ) ${newfile}"
 	allfiles="${allfiles} ${newfile}"
-done < <( find ./FHEM/ ./images/ -type f ) >SST.txt
+done < <( find ./FHEM/ ./images/ -type f ) >controls_SST.txt
 
 # update CHANGED file
-echo -e "FHEM SST last changes:\$( date +%F )\n$( git log --graph --format='%s' ${allfiles} )" | tee -a HISTORY >CHANGED 
+echo -e "FHEM SST last changes:\n$( date +%F )\n$( git log --graph --format='%s' ${allfiles} | head )" >CHANGED 
+
+# update git
+git add controls_SST.txt
+git add CHANGED
+git commit
