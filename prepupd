@@ -1,11 +1,8 @@
 #!/bin/bash   
-rm SST.txt
-find ./FHEM -type f \( ! -iname ".*" \) -print0 | while IFS= read -r -d '' f; 
-  do
-   echo "DEL ${f}" >> SST.txt
-   out="UPD "$(stat -f "%Sm" -t "%Y-%m-%d_%T" $f)" "$(stat -f%z $f)" ${f}"
-   echo ${out//.\//} >> SST.txt
-done
+while read newfile ; do
+	echo "DEL ${newfile}"
+	echo "UPD $( date -r ${newfile} +%F_%T ) $( stat -c %s ${newfile} ) ${newfile}"
+done < <( find ./FHEM/ ./images/ -type f ) >SST.txt
 
 # update CHANGED file
 $(
@@ -13,5 +10,5 @@ $(
 	date +%F >> CHANGED
 	echo " - $(git log -1 --pretty=%B)" >> CHANGED
 ) \
-    | tee -a CHANGE_HISTORY
+    | tee -a HISTORY
     >CHANGED 
