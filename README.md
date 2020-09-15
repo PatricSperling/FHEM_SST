@@ -10,8 +10,8 @@ Attention: This module is still under development. Please report any issues (htt
 In FHEM run:
 ```
 update add https://raw.githubusercontent.com/PatricSperling/FHEM_SST/master/controls_SST.txt
-update check tasmota
-update all tasmota
+update all
+shutdown restart
 ```
 
 The further proceedings can then be taken from the inline documentation.
