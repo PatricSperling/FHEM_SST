@@ -36,8 +36,6 @@ while : ; do
 	read -p "Content ok [yen]: "
 	case "${REPLY}" in
     	    ([yY]*)
-		echo yes
-		exit
 		# update git
 		git add controls_SST.txt
 		git add CHANGED
