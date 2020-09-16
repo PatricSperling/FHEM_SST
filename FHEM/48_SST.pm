@@ -1,6 +1,6 @@
 ################################################################################
 # 48_SST.pm
-#   Version 0.7.3 (2020-09-14)
+#   Version 0.7.5 (2020-09-16)
 #
 # SYNOPSIS
 #   Samsung SmartThings Connecton Module for FHEM
@@ -25,52 +25,6 @@ use warnings;
 
 # predefine some variables
 my $SST_missing_modules = '';
-# key: FHEM command
-# element 0: SmartThings capability
-# element 1: SmartThings set command
-# element 2: set data type (enum|number|string|vector3|colormap|null)
-# element 3: enum: comma sperated list
-#            number: min,max
-#            vector3: x,y,z
-#            colormap: hue,saturation
-my %SST_commands = (
-    'fridge_temperature' => [
-        'refrigerationSetpoint',
-        'setRefrigerationSetpoint',
-        'number',
-        '-460,10000'
-    ],
-    'fridge_power_cool' => [
-        'rapidCooling',
-        'setRapidCooling',
-        'enum',
-        'off,on'
-    ],
-    'freezer_power_freeze' => [
-        'rapidFreezing',
-        'setRapidFreezing',
-        'enum',
-        'off,on'
-    ],
-    'cleaner_recharge' => [
-        'robotCleanerMovement',
-        'setRobotCleanerMovement',
-        'enum',
-        'homing,idle,charging,alarm,powerOff,reserve,point,after,cleaning'
-    ],
-    'cleaner_turbo' => [
-        'robotCleanerTurboMode',
-        'setRobotCleanerTurboMode',
-        'enum',
-        'on,off,silence'
-    ],
-    'cleaner_mode' => [
-        'robotCleanerCleaningMode',
-        'setRobotCleanerCleaningMode',
-        'enum',
-        'auto,part,repeat,manual,stop,map'
-    ],
-);
 
 #package SmartThingsFridge;
 #use strict;
@@ -107,6 +61,7 @@ sub SST_Initialize($) {
     device_type:CONNECTOR,refrigerator,freezer,TV,washer,dryer,vacuumCleaner
     disable:1,0
     discard_units:0,1
+    brief_readings:1,0
     interval
     IODev
     setList
@@ -192,6 +147,7 @@ sub SST_Define($$) {
             $def_interval = 86400 if $def_interval < 0;
             $attr{$aArguments[0]}{interval} = $def_interval;
             $attr{$aArguments[0]}{icon}  = 'it_server';
+            $attr{$aArguments[0]}{icon}  = 'samsung_smartthings';
         }
         delete $attr{$aArguments[0]}{IODev};
         delete $attr{$aArguments[0]}{setList};
@@ -202,7 +158,7 @@ sub SST_Define($$) {
             $attr{$aArguments[0]}{interval} = $def_interval;
             $attr{$aArguments[0]}{device_id} = $tokenOrDevice if $tokenOrDevice;
             if( lc $attr{$aArguments[0]}{device_type} eq 'refrigerator' ){
-                $attr{$aArguments[0]}{icon}          = 'fridge';
+                $attr{$aArguments[0]}{icon}          = 'samsung_sidebyside';
                 $attr{$aArguments[0]}{setList}       = 'fridge_temperature rapidCooling:off,on rapidFreezing:off,on defrost:on,off waterFilterResetType:noArg';
                 $attr{$aArguments[0]}{stateFormat}   = "contactSensor_contact<br>temperatureMeasurement_temperature °C";
                 $attr{$aArguments[0]}{discard_units} = 1;
@@ -537,9 +493,9 @@ sub SST_getDeviceStatus($) {
     }
     return "Could not identify Samsung SmartThings token for $device - please check configuration." unless $token;
 
-    # poll cloud for all status object
+    # poll cloud for all status objects (all components)
     my $webget   = HTTP::Request->new('GET', 
-        "https://api.smartthings.com/v1/devices/" . AttrVal($device, 'device_id', undef) . "/components/main/status",
+        "https://api.smartthings.com/v1/devices/" . AttrVal($device, 'device_id', undef) . "/status",
         ['Authorization' => "Bearer: $token"]
     );
     my $webagent = LWP::UserAgent->new();
@@ -553,79 +509,112 @@ sub SST_getDeviceStatus($) {
         return "Samsung SmartThings cloud did not return valid JSON data string.\nPlease check log file for detailed information if this error repeats.";
         $hash->{STATE} = 'cloud return data error';
     }
-    #Log3 $hash, 3, "SST ($device): JSON data?: " . substr( $jsondata->content, 0, 40 ) . "...";
+    Log3 $hash, 5, "SST ($device): raw JSON data?: " . substr( $jsondata->content, 0, 40 ) . "...";
     my $jsonhash = decode_json($jsondata->content);
-    #Log3 $hash, 5, "SST ($device): JSON STRUCT (device status):\n".Dumper($jsonhash);
-    #if( AttrNum($device, 'verbose', 0) >= 5 ){
-    #my $jsondump = $jsondata->content;
-    #$jsondump =~ s/[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/g;
-    #Log3 $hash, 5, "SST ($device): JSON STRUCT (device status):\n$jsondump";
-    #}
+
+    #return Dumper($jsonhash) if AttrNum($device, 'pasp_dummy', 0);
 
     # TODO: possibly read in some manual disabled capabilities from attribute or reading
     my @setListHints = ();
     my @disabled = ();
     my %readings = ();
+    my $brief_readings = AttrNum($device, 'brief_readings', 1);
 
     # parse JSON struct
     Log3 $hash, 4, "SST ($device): parsing received JSON data";
-    foreach my $level_0 ( keys %{ $jsonhash } ){
-        #Log3 $hash, 4, "SST ($device): Key0: $level_0";
-        next if $level_0 eq 'execute';
-        if( $level_0 eq 'custom.disabledCapabilities' ){
-            push( @disabled, @{ $jsonhash->{'custom.disabledCapabilities'}->{disabledCapabilities}->{value} } ) if defined $jsonhash->{'custom.disabledCapabilities'}->{disabledCapabilities}->{value};
+    foreach my $baselevel ( keys %{ $jsonhash } ){
+        unless( $baselevel eq 'components' ){
+            Log3 $hash, 4, "SST ($device): status query - unexpected branch: $baselevel";
             next;
         }
-        if( ref $jsonhash->{$level_0} eq 'HASH' ){
-            foreach my $level_1 ( keys %{ $jsonhash->{$level_0} } ){
-                #Log3 $hash, 4, "SST ($device): Key1: $level_0 -> $level_1";
-                if( ref $jsonhash->{$level_0}->{$level_1} eq 'HASH' ){
-                    if( defined $jsonhash->{$level_0}->{$level_1}->{value} ){
-                        my $reading = makeReadingName( $level_0 . '_' . $level_1 );
-                        my $thisvalue = '';
-                        if( ref $jsonhash->{$level_0}->{$level_1}->{value} eq 'ARRAY' ){
-                            # this might always indicate value options... let's assume that for the time being
-                            push @setListHints, "$level_0:" . join( ',', @{ $jsonhash->{$level_0}->{$level_1}->{value} } );
-                            next;
-                        }
-                        $thisvalue = $jsonhash->{$level_0}->{$level_1}->{value}; # hope this works, can't verify myself
-                        if( $thisvalue =~ m/^([0-9]{4})-([0-9]{2})-([0-9]{2})T([012][0-9]):([0-5][0-9]):([0-5][0-9])\..*Z/ ){
-                            $thisvalue = FmtDateTime( fhemTimeGm( $6, $5, $4, $3, $2 - 1, $1 - 1900 ) );
-                        }
-                        if( exists $jsonhash->{$level_0}->{$level_1}->{unit} and not $nounits ){
-                            $readings{$reading} = $jsonhash->{$level_0}->{$level_1}->{value} . ' ' . $jsonhash->{$level_0}->{$level_1}->{unit};
-                        }else{
-                            $readings{$reading} = $jsonhash->{$level_0}->{$level_1}->{value};
-                        }
-                        next;
-                    }
+        foreach my $component ( keys %{ $jsonhash->{$baselevel} } ){
+            foreach my $capability ( keys %{ $jsonhash->{$baselevel}->{$component} } ){
+                Log3 $hash, 5, "SST ($device): status query - reading component: $component";
 
-                    foreach my $level_2 ( keys %{ $jsonhash->{$level_0}->{$level_1} } ){
-                        next if $level_2 eq 'timestamp'; # who cares about timestamps ...
-                        next unless defined $jsonhash->{$level_0}->{$level_1}->{$level_2}; # ... or empty elements
-                        #next if( $level_2 eq 'value' and not defined( $jsonhash->{$level_0}->{$level_1}->{$level_2} ) );
-                        Log3 $hash, 3, "SST ($device): unexpected hash reading in $level_0 -> $level_1 -> $level_2: " . ref( $jsonhash->{$level_0}->{$level_1}->{$level_2} );
-                        # TODO: propably extend interpretation if someone gets even more info
+                if( $capability eq 'execute' ){
+                    # we currently don't want readings for commands
+                    next;
+                }elsif( $capability eq 'custom.disabledCapabilities' ){
+                    if( defined $jsonhash->{$baselevel}->{$component}->{$capability}->{disabledCapabilities}->{value} ){
+                        # store it for later
+                        # TODO: probably needs some tendering first (disabled in one component, but not another...)
+                        foreach ( @{ $jsonhash->{$baselevel}->{$component}->{$capability}->{disabledCapabilities}->{value} } ){
+                            push( @disabled, $component . '_' . $_ );
+                        }
                     }
-                }else{
-                    Log3 $hash, 3, "SST ($device): unexpected non-hash reading in $level_0 -> $level_1: " . ref( $jsonhash->{$level_0}->{$level_1} );
+                    next;
                 }
-            }
-        }else{
-            Log3 $hash, 3, "SST ($device): unexpected non-hash reading in $level_0: " . ref( $jsonhash->{$level_0} );
-        }
-    }
+
+                if( ref $jsonhash->{$baselevel}->{$component}->{$capability} eq 'HASH' ){
+                    foreach my $module ( keys %{ $jsonhash->{$baselevel}->{$component}->{$capability} } ){
+                        Log3 $hash, 5, "SST ($device): status query - reading module: $module";
+                        if( ref $jsonhash->{$baselevel}->{$component}->{$capability}->{$module} eq 'HASH' ){
+                            if( defined $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} ){
+                                if( $component eq 'main' and $capability eq 'ocf' ){
+                                    # let's limit the ocf readings
+                                    unless( $module eq 'n' or $module eq 'mnmn' or $module eq 'mnmo' or $module eq 'vid' ){
+                                        next;
+                                    }
+                                }
+                                my $reading = makeReadingName( $component . '_' . $capability . '_' . $module );
+                                my $thisvalue = '';
+
+                                # manage arrays - most likely options
+                                if( ref $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} eq 'ARRAY' ){
+                                    # this might always indicate value options... let's assume that for the time being
+                                    push @setListHints, $component . '_' . $capability . ':' . join( ',', @{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} } );
+                                    next;
+                                }
+
+                                # recalculate timestamp
+                                $thisvalue = $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value}; # hope this works, can't verify myself
+                                if( $thisvalue =~ m/^([0-9]{4})-([0-9]{2})-([0-9]{2})T([012][0-9]):([0-5][0-9]):([0-5][0-9])\..*Z/ ){
+                                    $thisvalue = FmtDateTime( fhemTimeGm( $6, $5, $4, $3, $2 - 1, $1 - 1900 ) );
+                                }
+
+                                # remember reading
+                                $readings{$reading} = $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value};
+                                    $readings{$reading} .= ' ' . $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{unit} if( exists $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{unit} and not $nounits );
+                                next;
+                            }
+
+                            # delve into next level, where there is no value... :/
+                            foreach my $attribute ( keys %{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module} } ){
+                                next if $attribute eq 'timestamp'; # who cares about timestamps ...
+                                next unless defined $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute}; # ... or empty elements
+                                Log3 $hash, 3, "SST ($device): Status query - unexpected hash reading at attribute level: $baselevel/$component/$capability/$module/$attribute of type " . ref( $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute} );
+                                # TODO: propably extend interpretation if someone gets even more info
+                            } # foreach attribute
+                        }else{
+                            Log3 $hash, 3, "SST ($device): status query - unexpected non-hash reading at module level: $baselevel/$component/$capability/$module of type  " . ref( $jsonhash->{$baselevel}->{$component}->{$capability}->{$module} );
+                        }
+                    } # foreach module
+                }else{
+                    Log3 $hash, 3, "SST ($device): status query - unexpected non-hash reading at capability level: $baselevel/$component/$capability of type " . ref( $jsonhash->{$baselevel}->{$component}->{$capability} );
+                }
+            } # foreach capability
+        } # foreach component
+    } # foreach baselevel
+    Log3 $hash, 5, "SST ($device): status query - identified disabled components:\n" . Dumper( @disabled );
+    Log3 $hash, 5, "SST ($device): status query - identified readings:\n" . Dumper( %readings );
+    Log3 $hash, 5, "SST ($device): status query - identified setList options:\n" . Dumper( @setListHints );
 
     # create/update all readings
     readingsBeginUpdate($hash);
     readingsBulkUpdate( $hash, 'setList_hint', join( ' ', @setListHints ), 1 ) if $#setListHints >= 0;
-    EACHREADING: foreach my $reading ( keys %readings ){
+    EACHREADING: foreach my $key ( keys %readings ){
+        my $reading = $key;
         # remove disabled items even if they have values
         foreach (@disabled){
             my $regex = '^' . $_ . '_';
-            next EACHREADING if $reading =~ m/$regex/;
+            next EACHREADING if $key =~ m/$regex/;
         }
-        readingsBulkUpdate( $hash, $reading, $readings{$reading}, undef );
+        if( $brief_readings ){
+            # WTF - if enabled, there will be no readings
+            $reading =~ s/_[^_]+_/_/; # remove middle part (capability)
+            $reading =~ s/^main_//i;  # remove main component
+        }
+        readingsBulkUpdate( $hash, $reading, $readings{$key}, 1 );
     }
     readingsEndUpdate($hash, 1);
 
@@ -834,6 +823,15 @@ sub SST_sendCommand($@) {
     If set to <b>1</b> all setting options identified during a status update that are
     not yet defined in setList will be written into the setList attribute.<br>
 
+    <a name="brief_readings"></a>
+    <li>brief_readings<br>
+    Not valid for connector device. Defaults to <b>1</b> (on).<br>
+    If set to <b>1</b> the cloud reading names will be abbreviated resulting in
+    far more readable reading names.<br>
+    If set to <b>0</b> these names will remain as received. Only this way
+    unique names can be guaranteed. Use this if you think you miss some
+    readings.<br>
+
     <a name="device_id"></a>
     <li>device_id<br>
     Not valid for connector device.<br>
@@ -998,6 +996,16 @@ sub SST_sendCommand($@) {
     Bei einem Wert von <b>1</b> werden alle beim Gerätestatus erkanntens
     Einstellmöglichkeiten, welche noch nicht mittels setList bekannt sind,
     hinzugefügt.<br>
+
+    <a name="brief_readings"></a>
+    <li>brief_readings<br>
+    Für den Connector irrelevant. Default ist <b>1</b> (an).<br>
+    Ist dieser Wert an (<b>1</b>), werden die aus der Cloud bezogenen Namen
+    der einzelnen Readings nach fixen Regeln gekürzt, was die Lesbarkeit der
+    Readingnamen deutlich verbessert.<b>
+    Eine Deaktivierung dieses Attributs führt zu längeren, aber dafür 100%ig
+    eindeutigen Readingnamen. Wenn erwartete Reading vermisst werden, sollte
+    man diesen Wert ändern.<br>
 
     <a name="device_id"></a>
     <li>device_id<br>
