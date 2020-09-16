@@ -1,15 +1,56 @@
 #!/bin/bash   
-allfiles=''
-while read newfile ; do
-	echo "DEL ${newfile}"
-	echo "UPD $( date -r ${newfile} +%F_%T ) $( stat -c %s ${newfile} ) ${newfile}"
-	allfiles="${allfiles} ${newfile}"
-done < <( find ./FHEM/ ./images/ -type f ) >controls_SST.txt
+
+# update deletion list
+dellist=$( cat add_to_controls )
+(
+	echo "${dellist}"
+	while read status oldname garbage ; do
+    		[ $( echo "${status}" | grep -c [DR] ) -eq 1 ] && echo "DEL ./${oldname}"
+	done < <( git status --porcelain )
+) | sort -u >add_to_controls
+
+# build FHEM's controls_SST.txt
+modulefiles="$( find ./FHEM/ ./images/ -type f )"
+(
+    	[ -r add_to_controls ] && cat add_to_controls
+	while read newfile ; do
+		#echo "DEL ${newfile}"
+		echo "UPD $( date -r ${newfile} +%F_%T ) $( stat -c %s ${newfile} ) ${newfile}"
+	done < <( echo "${modulefiles}" ) 
+) >controls_SST.txt
 
 # update CHANGED file
-echo -e "FHEM SST last changes:\n$( date +%F )\n$( git log --graph --format='%s' ${allfiles} | head )" >CHANGED 
+(
+	echo "FHEM SST last changes:"
+	date +%F
+	git log --pretty=format:'%ci %h %s' ${modulefiles} | sort | cut -c 34- | sed 's:^: -:' | tail
+) >CHANGED
+git  log --pretty=format:'%ci %h %s' ${modulefiles} | sort -u >HISTORY
 
-# update git
-git add controls_SST.txt
-git add CHANGED
-git commit
+while : ; do
+	echo "=====> BEGIN FHEM <====="
+	cat controls_SST.txt
+	echo "=====> BEGIN CHANGES <====="
+	cat CHANGED
+	echo "=========="
+	read -p "Content ok [yen]: "
+	case "${REPLY}" in
+    	    ([yY]*)
+		echo yes
+		exit
+		# update git
+		git add controls_SST.txt
+		git add CHANGED
+		git commit
+		touch .last_prepupd
+		exit
+		;;
+    	    ([eE]*)
+		vim controls_SST.txt CHANGED
+		;;
+    	    (*)
+		exit
+		;;
+	esac
+done
+
