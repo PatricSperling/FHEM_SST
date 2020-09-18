@@ -1,6 +1,9 @@
 FHEM SST last changes:
-2020-09-16
+2020-09-18
  - initial version
  - minor changes
  - renamed SVGs to lowercase to match other files
  - changed status query to support multiple components changed naming for readings changed default icons for refrigeration and CONNECTOR
+ - added timeout for cloud requests / introduced attribute timeout
+ - aligned log messages
+ - adjusted version and date
