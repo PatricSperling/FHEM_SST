@@ -298,15 +298,13 @@ sub SST_ProcessTimer($) {
     my $interval = AttrNum( $device, 'interval', 0 );
     my $disabled = AttrNum( $device, 'disable',  0 );
 
-    #Log3 $hash, 3, "SST ($device): SST_ProcessTimer: in function SST_ProcessTimer (i $interval / d $disabled)";
-
     if( $interval and not $disabled ){
         if( AttrVal( $device, 'device_type', 'CONNECTOR' ) eq 'CONNECTOR' ){
             SST_getDeviceDetection($device);
         }else{
             SST_getDeviceStatus($device);
         }
-        #Log3 $hash, 3, "SST ($device): SST_ProcessTimer: reschedule " . ( gettimeofday() + $interval );
+        Log3 $hash, 4, "SST ($device): reschedule for epoch " . ( gettimeofday() + $interval );
         InternalTimer( gettimeofday() + $interval, 'SST_ProcessTimer', $hash );
     }
     return undef;
@@ -375,7 +373,7 @@ sub SST_getDeviceDetection($) {
         return "Could not obtain listing for Samsung SmartThings devices.\nPlease check your configuration.";
         $hash->{STATE} = 'cloud connection error';
     }elsif( $jsondata->content !~ m/^\{"/ ){
-        Log3 $hash, 2, "SST ($device): cloud did not answer with JSON:\n" . $jsondata->content;
+        Log3 $hash, 2, "SST ($device): cloud did not answer with JSON string:\n" . $jsondata->content;
         return "Samsung SmartThings cloud did not return valid JSON data string.\nPlease check log file for detailed information if this error repeats.";
         $hash->{STATE} = 'cloud return data error';
     }
@@ -418,7 +416,7 @@ sub SST_getDeviceDetection($) {
             if( readingsSingleUpdate($hash, "device_$deviceId", 'new', 1) ){
                 Log3 $hash, 3, "SST ($device): found new client device '$deviceId'";
             }else{
-                Log3 $hash, 3, "SST ($device): failed adding new client device '$deviceId'";
+                Log3 $hash, 2, "SST ($device): failed adding new client device '$deviceId'";
                 next;
             }
         }else{
@@ -450,14 +448,14 @@ sub SST_getDeviceDetection($) {
 
                 # create new device
                 # TODO: token rausschmeißen
-                Log3 $hash, 2, "SST ($device): automatically adding device $tmpname";
+                Log3 $hash, 3, "SST ($device): automatically adding device $tmpname";
                 fhem( "define $tmpname SST $subdevicetype IO=$device" );
                 if( AttrVal($tmpname, 'device_type', undef) ){
                     $msg .= " - newly created as $tmpname";
                     fhem "attr $tmpname device_id " . $items->{items}[$i]->{deviceId};
                     fhem "attr $tmpname device_name " . $items->{items}[$i]->{name};
                     unless( readingsSingleUpdate($hash, "device_$deviceId", "$tmpname", 1) ){
-                        Log3 $hash, 3, "SST ($device): updating reading for $deviceId failed - disabling autocreate";
+                        Log3 $hash, 2, "SST ($device): updating reading for $deviceId failed - disabling autocreate";
                         fhem( "attr $device autocreate 0" );
                     }
                 }else{
@@ -502,11 +500,11 @@ sub SST_getDeviceStatus($) {
     my $webagent = LWP::UserAgent->new( timeout => AttrNum($device, 'timeout', 3) );
     my $jsondata = $webagent->request($webget);
     if( not $jsondata->content ){
-        Log3 $hash, 2, "SST ($device): status retrieval failed";
+        Log3 $hash, 2, "SST ($device): get status - failed (empty string)";
         return "Could not obtain status for Samsung SmartThings Device $device.\nPlease check your configuration.";
         $hash->{STATE} = 'cloud connection error';
     }elsif( $jsondata->content !~ m/^\{"/ ){
-        Log3 $hash, 2, "SST ($device): cloud did not answer with JSON:\n" . $jsondata->content;
+        Log3 $hash, 2, "SST ($device): get status - cloud did not answer with JSONi string:\n" . $jsondata->content;
         return "Samsung SmartThings cloud did not return valid JSON data string.\nPlease check log file for detailed information if this error repeats.";
         $hash->{STATE} = 'cloud return data error';
     }
@@ -522,15 +520,15 @@ sub SST_getDeviceStatus($) {
     my $brief_readings = AttrNum($device, 'brief_readings', 1);
 
     # parse JSON struct
-    Log3 $hash, 4, "SST ($device): parsing received JSON data";
+    Log3 $hash, 5, "SST ($device): get status - received JSON data";
     foreach my $baselevel ( keys %{ $jsonhash } ){
         unless( $baselevel eq 'components' ){
-            Log3 $hash, 4, "SST ($device): status query - unexpected branch: $baselevel";
+            Log3 $hash, 4, "SST ($device): get status - unexpected branch: $baselevel";
             next;
         }
         foreach my $component ( keys %{ $jsonhash->{$baselevel} } ){
             foreach my $capability ( keys %{ $jsonhash->{$baselevel}->{$component} } ){
-                Log3 $hash, 5, "SST ($device): status query - reading component: $component";
+                Log3 $hash, 5, "SST ($device): get status - parsing component: $component";
 
                 if( $capability eq 'execute' ){
                     # we currently don't want readings for commands
@@ -548,14 +546,12 @@ sub SST_getDeviceStatus($) {
 
                 if( ref $jsonhash->{$baselevel}->{$component}->{$capability} eq 'HASH' ){
                     foreach my $module ( keys %{ $jsonhash->{$baselevel}->{$component}->{$capability} } ){
-                        Log3 $hash, 5, "SST ($device): status query - reading module: $module";
+                        Log3 $hash, 5, "SST ($device): get status - parsing module: $module";
                         if( ref $jsonhash->{$baselevel}->{$component}->{$capability}->{$module} eq 'HASH' ){
                             if( defined $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} ){
                                 if( $component eq 'main' and $capability eq 'ocf' ){
                                     # let's limit the ocf readings
-                                    unless( $module eq 'n' or $module eq 'mnmn' or $module eq 'mnmo' or $module eq 'vid' ){
-                                        next;
-                                    }
+                                    next unless $module eq 'n' or $module eq 'mnmn' or $module eq 'mnmo' or $module eq 'vid';
                                 }
                                 my $reading = makeReadingName( $component . '_' . $capability . '_' . $module );
                                 my $thisvalue = '';
@@ -583,15 +579,15 @@ sub SST_getDeviceStatus($) {
                             foreach my $attribute ( keys %{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module} } ){
                                 next if $attribute eq 'timestamp'; # who cares about timestamps ...
                                 next unless defined $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute}; # ... or empty elements
-                                Log3 $hash, 3, "SST ($device): Status query - unexpected hash reading at attribute level: $baselevel/$component/$capability/$module/$attribute of type " . ref( $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute} );
+                                Log3 $hash, 3, "SST ($device): get status - unexpected hash reading at attribute level: $baselevel/$component/$capability/$module/$attribute of type " . ref( $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute} );
                                 # TODO: propably extend interpretation if someone gets even more info
                             } # foreach attribute
                         }else{
-                            Log3 $hash, 3, "SST ($device): status query - unexpected non-hash reading at module level: $baselevel/$component/$capability/$module of type  " . ref( $jsonhash->{$baselevel}->{$component}->{$capability}->{$module} );
+                            Log3 $hash, 3, "SST ($device): get status - unexpected non-hash reading at module level: $baselevel/$component/$capability/$module of type  " . ref( $jsonhash->{$baselevel}->{$component}->{$capability}->{$module} );
                         }
                     } # foreach module
                 }else{
-                    Log3 $hash, 3, "SST ($device): status query - unexpected non-hash reading at capability level: $baselevel/$component/$capability of type " . ref( $jsonhash->{$baselevel}->{$component}->{$capability} );
+                    Log3 $hash, 3, "SST ($device): get status - unexpected non-hash reading at capability level: $baselevel/$component/$capability of type " . ref( $jsonhash->{$baselevel}->{$component}->{$capability} );
                 }
             } # foreach capability
         } # foreach component
@@ -636,7 +632,7 @@ sub SST_getDeviceStatus($) {
         }
         if( $updated ){
             $attr{$device}{setList} = join ' ', @setList_new;
-            Log3 $hash, 3, "SST ($device): extended setList by $updated entries";
+            Log3 $hash, 4, "SST ($device): get status - extended setList by $updated entries";
         }
     }
 
@@ -724,7 +720,7 @@ sub SST_sendCommand($@) {
     my $jsondata = $webagent->request($webpost);
 
     unless( $jsondata->content){
-        Log3 $hash, 3, "SST ($device): setting $capa / $cmd / $cmdargs failed";
+        Log3 $hash, 2, "SST ($device): setting $capa / $cmd / $cmdargs failed (empty JSON string)";
         return "Could not set $capa for Samsung SmartThings Device $device.";
     }
     #my $jsonhash = decode_json($jsondata->content);
