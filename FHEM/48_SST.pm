@@ -1,6 +1,6 @@
 ################################################################################
 # 48_SST.pm
-#   Version 0.7.5 (2020-09-16)
+#   Version 0.7.7 (2020-09-18)
 #
 # SYNOPSIS
 #   Samsung SmartThings Connecton Module for FHEM
