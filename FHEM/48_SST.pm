@@ -56,15 +56,16 @@ sub SST_Initialize($) {
     my @attrList = qw(
     autocreate:0,1,2
     autoextend_setList:1,0
+    brief_readings:1,0
     device_id
     device_name
     device_type:CONNECTOR,refrigerator,freezer,TV,washer,dryer,vacuumCleaner
     disable:1,0
     discard_units:0,1
-    brief_readings:1,0
     interval
     IODev
     setList
+    timeout
     );
     $hash->{AttrList} = join(" ", @attrList)." ".$readingFnAttributes;
 
@@ -366,7 +367,7 @@ sub SST_getDeviceDetection($) {
         "https://api.smartthings.com/v1/devices/",
         ['Authorization' => "Bearer: $token"]
     );
-    my $webagent = LWP::UserAgent->new();
+    my $webagent = LWP::UserAgent->new( timeout => AttrNum($device, 'timeout', 3) );
     my $jsondata = $webagent->request($webget);
 
     if( not $jsondata->content ){
@@ -498,7 +499,7 @@ sub SST_getDeviceStatus($) {
         "https://api.smartthings.com/v1/devices/" . AttrVal($device, 'device_id', undef) . "/status",
         ['Authorization' => "Bearer: $token"]
     );
-    my $webagent = LWP::UserAgent->new();
+    my $webagent = LWP::UserAgent->new( timeout => AttrNum($device, 'timeout', 3) );
     my $jsondata = $webagent->request($webget);
     if( not $jsondata->content ){
         Log3 $hash, 2, "SST ($device): status retrieval failed";
@@ -719,7 +720,7 @@ sub SST_sendCommand($@) {
         ['Authorization' => "Bearer: " . AttrVal($device, 'token', undef)],
         $jsoncmd
     );
-    my $webagent = LWP::UserAgent->new();
+    my $webagent = LWP::UserAgent->new( timeout => AttrNum($device, 'timeout', 3) );
     my $jsondata = $webagent->request($webpost);
 
     unless( $jsondata->content){
@@ -895,14 +896,11 @@ sub SST_sendCommand($@) {
     change requests to the default.<br>
     If autoextend_setList is set, this list may grow on status updates.<br>
 
-    <a name="token"></a>
-    <li>token<br>
-    This is the 32 digits hexadecimal Samsung SmartThings token. To obtain it,
-    please go to <a href="https://account.smartthings.com/tokens"
-    target='_blank'>https://account.smartthings.com/tokens</a>.<br>
-    This attribute needs to be given on connector creation. On device
-    generation it is taken from the connector settings and usually does not
-    require your attention.<br>
+    <a name="timeout"></a>
+    <li>timeout<br>
+    Defaults to 3 seconds.
+    This is the timeout for cloud requests in seconds. Setting this to low
+    values will avoid FHEM to freeze on bad internet connections.<br>
 
   </ul><br>
 
@@ -1054,10 +1052,8 @@ sub SST_sendCommand($@) {
 
     <a name="IODev"></a>
     <li>IODev<br>
-    Not valid for connector device.<br>
-    This is usually set on define and will allow you to identify connected
-    devices from the connector device. It is also used for delting all pysical
-    devices when deleting the connector device.<br>
+    Für den Connector irrelevant.<br>
+    Dieser Wert enthält den Namen des Connector Geräts.<br>
     Dieses Attribut wird bei der automatischen Erstellung durch den Connector
     gesetzt und bedarf keiner Anpassung durch den Nutzer.<br>
 
@@ -1070,14 +1066,12 @@ sub SST_sendCommand($@) {
     change requests to the default.<br>
     If autoextend_setList is set, this list may grow on status updates.<br>
 
-    <a name="token"></a>
-    <li>token<br>
-    This is the 32 digits hexadecimal Samsung SmartThings token. To obtain it,
-    please go to <a href="https://account.smartthings.com/tokens"
-    target='_blank'>https://account.smartthings.com/tokens</a>.<br>
-    This attribute needs to be given on connector creation. On device
-    generation it is taken from the connector settings and usually does not
-    require your attention.<br>
+    <a name="timeout"></a>
+    <li>timeout<br>
+    Der Default ist 3 Sekunden.<br>
+    Dieser Wert bestimmt den Timeout für Cloud-Ab- und Anfragen. Niedrige
+    Werte verhindern, daß FHEM bei schlechten Internetanbindungen
+    einfriert.<br>
 
   </ul><br>
 
