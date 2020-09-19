@@ -1,35 +1,36 @@
-#!/bin/bash   
+#!/bin/bash
+# Version 0.8
 
-# update deletion list
-dellist=$( cat add_to_controls )
-(
-	echo "${dellist}"
-	while read status oldname garbage ; do
-    		[ $( echo "${status}" | grep -c [DR] ) -eq 1 ] && echo "DEL ./${oldname}"
-	done < <( git status --porcelain )
-) | sort -u >add_to_controls
+[ -f .moduleconfig ] || exit 2
+source .moduleconfig || exit 3
 
-# build FHEM's controls_SST.txt
-modulefiles="$( find ./FHEM/ ./images/ -type f )"
-(
-    	[ -r add_to_controls ] && cat add_to_controls
-	while read newfile ; do
-		#echo "DEL ${newfile}"
-		echo "UPD $( date -r ${newfile} +%F_%T ) $( stat -c %s ${newfile} ) ${newfile}"
-	done < <( echo "${modulefiles}" ) 
-) >controls_SST.txt
+MODULE_FILES="$( find ${MODULE_DIRS} -type f | grep -vf ${MODULE_IGNORE} )"
+NEWEST_FILE=$( ls -1t ${MODULE_FILES} | head -1 )
+VERSION=$( head ${NEWEST_FILE} | grep Version | sed -e 's:.*Version :Version :' -e 's: (.*::' )
+
+if [ ${NEWEST_FILE} -ot ${MODULE_CONTROL} ] ; then
+    echo >&2 "no files have changed since last update push"
+    exit 4
+fi
+
+# build FHEM's control file
+while read GIT_STATUS GIT_FILENAME garbage ; do
+    [ $( echo "${GIT_STATUS}" | grep -c [DR] ) -eq 1 ] && echo "DEL ./${GIT_FILENAME}"
+done < <( git status --porcelain ) >>${MODULE_DELETES}
+cat ${MODULE_DELETES} | sort -u >${MODULE_CONTROL}
+while read MODULE_FILE ; do
+    echo "UPD $( date -r ${MODULE_FILE} +%F_%T ) $( stat -c %s ${MODULE_FILE} ) ${MODULE_FILE}"
+done < <( echo "${MODULE_FILES}" ) >>${MODULE_CONTROL}
 
 # update CHANGED file
-(
-	echo "FHEM SST last changes:"
-	date +%F
-	git log --pretty=format:'%ci %h %s' ${modulefiles} | sort | cut -c 34- | sed 's:^: -:' | tail
-) >CHANGED
-git  log --pretty=format:'%ci %h %s' ${modulefiles} | sort -u >HISTORY
+echo -e "FHEM module ${MODULE} last changes:
+$( date +%F )
+$( git log --pretty=format:'%ci %h %s' ${MODULE_FILES} | sort -ru | cut -c 34- | sed 's:^: -:' | tail )" >CHANGED
+git log --pretty=format:'%ci %h %s' ${MODULE_FILES} ${MODULE_CONTROL} | sort -ru >HISTORY
 
 while : ; do
 	echo "=====> BEGIN FHEM <====="
-	cat controls_SST.txt
+	cat ${MODULE_CONTROL}
 	echo "=====> BEGIN CHANGES <====="
 	cat CHANGED
 	echo "=========="
@@ -37,17 +38,17 @@ while : ; do
 	case "${REPLY}" in
     	    ([yY]*)
 		# update git
-		git add controls_SST.txt
-		git add CHANGED
-		git commit
-		touch .last_prepupd
+		git add ${MODULE_CONTROL} CHANGED
+		git commit -m "${VERSION}"
+		git push
 		exit
 		;;
     	    ([eE]*)
-		vim controls_SST.txt CHANGED
+		vim ${MODULE_CONTROL} CHANGED
 		;;
     	    (*)
-		exit
+		echo >&2 "aborting module update"
+		exit 1
 		;;
 	esac
 done
