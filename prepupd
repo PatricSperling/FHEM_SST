@@ -8,12 +8,13 @@ MODULE_FILES="$( find ${MODULE_DIRS} -type f | grep -vf ${MODULE_IGNORE} )"
 NEWEST_FILE=$( ls -1t ${MODULE_FILES} | head -1 )
 VERSION=$( head ${NEWEST_FILE} | grep Version | sed -e 's:.*Version :Version :' -e 's: (.*::' )
 
-if [ ${NEWEST_FILE} -ot ${MODULE_CONTROL} ] ; then
+if [ ${NEWEST_FILE} -ot ${MODULE_CONTROL} -a ! -f .preupd_unfinished ] ; then
     echo >&2 "no files have changed since last update push"
     exit 4
 fi
 
 # build FHEM's control file
+touch .preupd_unfinished
 while read GIT_STATUS GIT_FILENAME garbage ; do
     [ $( echo "${GIT_STATUS}" | grep -c [DR] ) -eq 1 ] && echo "DEL ./${GIT_FILENAME}"
 done < <( git status --porcelain ) >>${MODULE_DELETES}
@@ -41,6 +42,7 @@ while : ; do
 		git add ${MODULE_CONTROL} CHANGED
 		git commit -m "${VERSION}"
 		git push
+		rm .preupd_unfinished
 		exit
 		;;
     	    ([eE]*)
