@@ -1,6 +1,6 @@
 ################################################################################
 # 48_SST.pm
-#   Version 0.7.8 (2020-09-23)
+#   Version 0.7.9 (2020-09-23)
 #
 # SYNOPSIS
 #   Samsung SmartThings Connecton Module for FHEM
@@ -172,7 +172,7 @@ sub SST_Define($$) {
             }elsif( lc $attr{$aArguments[0]}{device_type} eq 'vacuumCleaner' ){ # TODO: is this the correct identifyer?
                 $attr{$aArguments[0]}{icon}    = 'vacuum_top';
                 $attr{$aArguments[0]}{setList} = 'recharge:noArg turbo:on,off,silence mode:auto,part,repeat,manual,stop,map';
-            if( lc $attr{$aArguments[0]}{device_type} eq 'room_a_c' ){
+            }elsif( lc $attr{$aArguments[0]}{device_type} eq 'room_a_c' ){
                 $attr{$aArguments[0]}{icon}        = 'samsung_ac';
                 $attr{$aArguments[0]}{stateFormat} = 'airConditionerMode';
             }else{
