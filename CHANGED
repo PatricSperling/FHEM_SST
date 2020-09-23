@@ -1,9 +1,11 @@
-FHEM SST last changes:
-2020-09-18
- - initial version
- - minor changes
- - renamed SVGs to lowercase to match other files
- - changed status query to support multiple components changed naming for readings changed default icons for refrigeration and CONNECTOR
- - added timeout for cloud requests / introduced attribute timeout
- - aligned log messages
+FHEM module SST last changes:
+2020-09-23
+ - added basic support for air conditioning
+ - added new svg for air conditioning aligned stroke width for device svgs
  - adjusted version and date
+ - aligned log messages
+ - added timeout for cloud requests / introduced attribute timeout
+ - changed status query to support multiple components changed naming for readings changed default icons for refrigeration and CONNECTOR
+ - renamed SVGs to lowercase to match other files
+ - minor changes
+ - initial version
