@@ -1,5 +1,6 @@
 FHEM module SST last changes:
 2020-09-23
+ - fixed missing bracket (stupid me)
  - added basic support for air conditioning
  - added new svg for air conditioning aligned stroke width for device svgs
  - adjusted version and date
