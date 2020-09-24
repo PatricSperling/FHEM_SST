@@ -1,0 +1,17 @@
+2020-09-24 21:22:51 +0200 ebe5102 fixed status string for fridge/freezer; fixed bug with device types containing underscore
+2020-09-23 19:07:06 +0200 2ae4103 Version 0.7.9
+2020-09-23 19:05:51 +0200 0d2241f fixed missing bracket (stupid me)
+2020-09-23 18:56:00 +0200 4fd9c83 Version 0.7.8
+2020-09-23 18:50:46 +0200 1ed69bc added basic support for air conditioning
+2020-09-23 18:08:18 +0200 def19ba added new svg for air conditioning aligned stroke width for device svgs
+2020-09-18 22:06:12 +0200 5895c01 fixed size?
+2020-09-18 21:57:11 +0200 d427b82 new version
+2020-09-18 21:54:27 +0200 2c9fa57 adjusted version and date
+2020-09-18 17:46:37 +0200 962b57f aligned log messages
+2020-09-18 08:34:12 +0200 24e619b added timeout for cloud requests / introduced attribute timeout
+2020-09-16 17:30:52 +0200 1bb0211 Version 0.7.5
+2020-09-16 17:28:44 +0200 92b9b7f changed status query to support multiple components changed naming for readings changed default icons for refrigeration and CONNECTOR
+2020-09-16 16:58:24 +0200 e989004 renamed SVGs to lowercase to match other files
+2020-09-14 22:29:46 +0200 415a1ed rename
+2020-09-14 21:43:29 +0200 8ae195d minor changes
+2020-09-14 21:16:29 +0200 0cbcff3 initial version
