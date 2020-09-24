@@ -1,6 +1,6 @@
 ################################################################################
 # 48_SST.pm
-#   Version 0.7.10 (2020-09-24)
+#   Version 0.7.11 (2020-09-24)
 #
 # SYNOPSIS
 #   Samsung SmartThings Connecton Module for FHEM
@@ -163,12 +163,13 @@ sub SST_Define($$) {
                 $attr{$aArguments[0]}{stateFormat}   = "cooler_temperature °C (cooler_contact)<br>\nfreezer_temperature °C (freezer_contact)";
                 $attr{$aArguments[0]}{discard_units} = 1;
             }elsif( lc $attr{$aArguments[0]}{device_type} eq 'tv' ){
-                $attr{$aArguments[0]}{icon}    = 'it_television';
-                $attr{$aArguments[0]}{setList} = 'power:off,on,inbetween';
+                $attr{$aArguments[0]}{icon}        = 'it_television';
+                $attr{$aArguments[0]}{setList}     = 'power:off,on,inbetween';
+                $attr{$aArguments[0]}{stateFormat} = 'switch<br>tvChannel';
             }elsif( lc $attr{$aArguments[0]}{device_type} eq 'washer' ){
                 $attr{$aArguments[0]}{icon}        = 'scene_washing_machine';
                 $attr{$aArguments[0]}{setList}     = 'washerMode:regular,heavy,rinse,spinDry state:pause,run,stop';
-                $attr{$aArguments[0]}{stateFormat} = 'washerOperatingState_machineState<br>washerOperatingState_washerJobState';
+                $attr{$aArguments[0]}{stateFormat} = 'machineState<br>washerJobState';
             }elsif( lc $attr{$aArguments[0]}{device_type} eq 'vacuumCleaner' ){ # TODO: is this the correct identifyer?
                 $attr{$aArguments[0]}{icon}    = 'vacuum_top';
                 $attr{$aArguments[0]}{setList} = 'recharge:noArg turbo:on,off,silence mode:auto,part,repeat,manual,stop,map';
