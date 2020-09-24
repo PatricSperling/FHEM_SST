@@ -1,6 +1,6 @@
 ################################################################################
 # 48_SST.pm
-#   Version 0.7.9 (2020-09-23)
+#   Version 0.7.10 (2020-09-24)
 #
 # SYNOPSIS
 #   Samsung SmartThings Connecton Module for FHEM
@@ -120,7 +120,7 @@ sub SST_Define($$) {
                 fhem "delete $aArguments[0]";
                 return "IO device given more than once!\n$syntax";
             }
-        }elsif( $aArguments[$index] =~ m/^[A-Za-z]+$/ ){
+        }elsif( $aArguments[$index] =~ m/^[A-Za-z_]+$/ ){
             # one upper/lowercase word -> device type
             if( $attr{$aArguments[0]}{device_type} eq '' ){
                 $attr{$aArguments[0]}{device_type} = $aArguments[$index];
@@ -160,7 +160,7 @@ sub SST_Define($$) {
             if( lc $attr{$aArguments[0]}{device_type} eq 'refrigerator' ){
                 $attr{$aArguments[0]}{icon}          = 'samsung_sidebyside';
                 $attr{$aArguments[0]}{setList}       = 'fridge_temperature rapidCooling:off,on rapidFreezing:off,on defrost:on,off waterFilterResetType:noArg';
-                $attr{$aArguments[0]}{stateFormat}   = 'contactSensor_contact<br>temperatureMeasurement_temperature °C';
+                $attr{$aArguments[0]}{stateFormat}   = "cooler_temperature °C (cooler_contact)<br>\nfreezer_temperature °C (freezer_contact)";
                 $attr{$aArguments[0]}{discard_units} = 1;
             }elsif( lc $attr{$aArguments[0]}{device_type} eq 'tv' ){
                 $attr{$aArguments[0]}{icon}    = 'it_television';
