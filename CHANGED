@@ -1,12 +1,12 @@
 FHEM module SST last changes:
 2020-09-24
+ - changed some default status settings
+ - fixed status string for fridge/freezer; fixed bug with device types containing underscore
  - fixed missing bracket (stupid me)
  - added basic support for air conditioning
- - added new svg for air conditioning aligned stroke width for device svgs
  - adjusted version and date
  - aligned log messages
  - added timeout for cloud requests / introduced attribute timeout
  - changed status query to support multiple components changed naming for readings changed default icons for refrigeration and CONNECTOR
- - renamed SVGs to lowercase to match other files
  - minor changes
  - initial version
