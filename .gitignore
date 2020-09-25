@@ -1,3 +1,5 @@
 .git
+.fhem_control_deletion_list
 *.precommit
 *.backup-*
+data/
