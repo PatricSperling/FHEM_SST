@@ -1,6 +1,6 @@
 ################################################################################
 # 48_SST.pm
-#   Version 0.7.11 (2020-09-24)
+#   Version 0.7.12 (2020-09-25)
 #
 # SYNOPSIS
 #   Samsung SmartThings Connecton Module for FHEM
@@ -373,15 +373,18 @@ sub SST_getDeviceDetection($) {
     my $jsondata = $webagent->request($webget);
 
     if( not $jsondata->content ){
-        Log3 $hash, 2, "SST ($device): status retrieval failed";
+        Log3 $hash, 2, "SST ($device): get device_list - retrieval failed";
         return "Could not obtain listing for Samsung SmartThings devices.\nPlease check your configuration.";
         $hash->{STATE} = 'cloud connection error';
+    }elsif( $jsondata->content =~ m/^read timeout/ ){
+        Log3 $hash, 3, "SST ($device): get device_list - cloud query timed out";
+        readingsSingleUpdate($hash, 'timeount_counter', AttrNum($device, 'timeout_counter', 0) + 1, 1);
     }elsif( $jsondata->content !~ m/^\{"/ ){
-        Log3 $hash, 2, "SST ($device): cloud did not answer with JSON string:\n" . $jsondata->content;
+        Log3 $hash, 2, "SST ($device): get device_list - cloud did not answer with JSON string:\n" . $jsondata->content;
         return "Samsung SmartThings cloud did not return valid JSON data string.\nPlease check log file for detailed information if this error repeats.";
         $hash->{STATE} = 'cloud return data error';
     }
-    #Log3 $hash, 5, "SST ($device): JSON data?: " . substr( $jsondata->content, 0, 40 ) . '...';
+    #Log3 $hash, 5, "SST ($device): get device_list - JSON data?: " . substr( $jsondata->content, 0, 40 ) . '...';
 
     my $items    = decode_json($jsondata->content);
     my $count    = scalar @{ $items->{items}};
@@ -418,13 +421,13 @@ sub SST_getDeviceDetection($) {
         if( ReadingsVal($device, "device_$deviceId", '') eq '' ){
             # create new reading if missing
             if( readingsSingleUpdate($hash, "device_$deviceId", 'new', 1) ){
-                Log3 $hash, 3, "SST ($device): found new client device '$deviceId'";
+                Log3 $hash, 3, "SST ($device): get device_list - added new client device '$deviceId'";
             }else{
-                Log3 $hash, 2, "SST ($device): failed adding new client device '$deviceId'";
+                Log3 $hash, 2, "SST ($device): get device_list - failed adding new client device '$deviceId'";
                 next;
             }
         }else{
-            Log3 $hash, 4, "SST ($device): identified already known device '$deviceId'";
+            Log3 $hash, 4, "SST ($device): get device_list - skipping known device '$deviceId'";
         }
 
         if( AttrNum($device, 'autocreate', '0') > 0 ){
@@ -448,19 +451,19 @@ sub SST_getDeviceDetection($) {
                     $subdevicetype = lc($1);
                 }else{
                     $msg .= 'cannot determine device type from name (' . $items->{items}[$i]->{name} . ') or deviceTypeName (' . $items->{items}[$i]->{deviceTypeName} . ').';
-                    Log3 $hash, 2, "SST ($device): cannot determine device type from name (" . $items->{items}[$i]->{name} . ') or deviceTypeName (' . $items->{items}[$i]->{deviceTypeName} . ').';
+                    Log3 $hash, 2, "SST ($device): get device_list - cannot determine device type from name (" . $items->{items}[$i]->{name} . ') or deviceTypeName (' . $items->{items}[$i]->{deviceTypeName} . ').';
                 }
                 $subdevicetype =~ s/[\s\/]/_/g;
 
                 # create new device
-                Log3 $hash, 3, "SST ($device): automatically adding device $tmpname";
+                Log3 $hash, 3, "SST ($device): get device_list - automatically adding device $tmpname as $subdevicetype";
                 fhem( "define $tmpname SST $subdevicetype IO=$device" );
                 if( AttrVal($tmpname, 'device_type', undef) ){
                     $msg .= " - newly created as $tmpname";
                     fhem "attr $tmpname device_id " . $items->{items}[$i]->{deviceId};
                     fhem "attr $tmpname device_name " . $items->{items}[$i]->{name};
                     unless( readingsSingleUpdate($hash, "device_$deviceId", "$tmpname", 1) ){
-                        Log3 $hash, 2, "SST ($device): updating reading for $deviceId failed - disabling autocreate";
+                        Log3 $hash, 2, "SST ($device): get device_list - reading update for $deviceId failed - disabling autocreate";
                         fhem( "attr $device autocreate 0" );
                     }
                 }else{
@@ -508,8 +511,11 @@ sub SST_getDeviceStatus($) {
         Log3 $hash, 2, "SST ($device): get status - failed (empty string)";
         return "Could not obtain status for Samsung SmartThings Device $device.\nPlease check your configuration.";
         $hash->{STATE} = 'cloud connection error';
+    }elsif( $jsondata->content =~ m/^read timeout/ ){
+        Log3 $hash, 3, "SST ($device): get status - cloud query timed out";
+        readingsSingleUpdate($hash, 'timeout_counter', AttrNum($device, 'timeout_counter', 0) + 1, 1);
     }elsif( $jsondata->content !~ m/^\{"/ ){
-        Log3 $hash, 2, "SST ($device): get status - cloud did not answer with JSONi string:\n" . $jsondata->content;
+        Log3 $hash, 2, "SST ($device): get status - cloud did not answer with JSON string:\n" . $jsondata->content;
         return "Samsung SmartThings cloud did not return valid JSON data string.\nPlease check log file for detailed information if this error repeats.";
         $hash->{STATE} = 'cloud return data error';
     }
