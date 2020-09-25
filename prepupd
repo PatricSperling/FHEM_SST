@@ -23,11 +23,15 @@ while read MODULE_FILE ; do
     echo "UPD $( date -r ${MODULE_FILE} +%F_%T ) $( stat -c %s ${MODULE_FILE} ) ${MODULE_FILE}"
 done < <( echo "${MODULE_FILES}" ) >>${MODULE_CONTROL}
 
+# update HISTORY file
+echo $( date +%F\ %T\ %z ) ${VERSION} >HISTORY
+git log --pretty=format:'%ci %s' ${MODULE_FILES} ${MODULE_CONTROL} | sort -ru >>HISTORY
+
 # update CHANGED file
-echo -e "FHEM module ${MODULE} last changes:
-$( date +%F )
-$( git log --pretty=format:'%ci %h %s' ${MODULE_FILES} | sort -ru | cut -c 34- | sed 's:^: -:' | tail )" >CHANGED
-git log --pretty=format:'%ci %h %s' ${MODULE_FILES} ${MODULE_CONTROL} | sort -ru >HISTORY
+echo -e "FHEM module ${MODULE} last 3 changes:\n$( date +%F )" >CHANGED
+cat HISTORY \
+    | sed -E -e 's:^([0-9 :-]*) [+-][0-9]* (Version.*):\1\: \2:' -e 's:^[0-9 :-]* [+-][0-9]* : - :' \
+    | awk '/: Version /{c=c+1}c==4{exit}{print}' >>CHANGED
 
 while : ; do
 	echo "=====> BEGIN FHEM <====="

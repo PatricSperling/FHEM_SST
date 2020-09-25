@@ -1,5 +1,5 @@
 MODULE='SST'
-MODULE_DIRS="./FHEM/ ./images/"
+MODULE_DIRS="./FHEM/ ./www/"
 MODULE_CONTROL="controls_${MODULE}.txt"
 MODULE_IGNORE='.nocommit'
 MODULE_DELETES='.fhem_control_deletion_list'
