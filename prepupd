@@ -43,7 +43,7 @@ while : ; do
 	case "${REPLY}" in
     	    ([yY]*)
 		# update git
-		git add ${MODULE_CONTROL} CHANGED
+		git add ${MODULE_CONTROL} CHANGED HISTORY
 		git commit -m "${VERSION}"
 		git push
 		rm .preupd_unfinished
