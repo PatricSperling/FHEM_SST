@@ -1,6 +1,6 @@
 ################################################################################
 # 48_SST.pm
-#   Version 0.7.12 (2020-09-25)
+#   Version 0.7.13 (2020-09-25)
 #
 # SYNOPSIS
 #   Samsung SmartThings Connecton Module for FHEM
@@ -912,6 +912,33 @@ sub SST_sendCommand($@) {
 
   </ul><br>
 
+  <a name="SSTreadings"></a>
+  <b>Readings</b>
+  <ul>
+
+    <a name="devices"></a>
+    <li>device_.*<br>
+    These readings are created for the CONNECTOR for each client device
+    identified from the Samsung SmartThings cloud service.<br>
+
+    <a name="lastrun"></a>
+    <li>lastrun<br>
+    This reading is set for the CONNECTOR each time it successfully retrieves
+    information from the Samsung SmartThings cloud service.<br>
+
+    <a name="timeount_counter"></a>
+    <li>timeount_counter<br>
+    This reading shows how often the retieval of information from the Samsung
+    SmartThings cloud service fails and when it did fail last.<br>
+
+    <a name="other"></a>
+    <li>other readings<br>
+    All other readings for physical devices represent one, as Samsung calls
+    them, capability. These capabilities vary greatly from device type to
+    device type, so we cannot explain them here.<br>
+
+  </ul><br>
+
 </ul><br>
 
 =end html
@@ -1080,6 +1107,37 @@ sub SST_sendCommand($@) {
     Dieser Wert bestimmt den Timeout für Cloud-Ab- und Anfragen. Niedrige
     Werte verhindern, daß FHEM bei schlechten Internetanbindungen
     einfriert.<br>
+
+  </ul><br>
+
+  <a name="SSTreadings"></a>
+  <b>Readings</b>
+  <ul>
+
+    <a name="devices"></a>
+    <li>device_.*<br>
+    Diese Readings werden im CONNECTOR für jedes über den Samsung SmartThings
+    Cloud Dienst erkannte Endgerät erzeut, und enthalten entweder den FHEM
+    Gerätenamen oder <b>new</b>, falls das Gerät noch nicht in FHEM angelegt
+    wurde. Setzt man den Wert auf etwas anderes (z.B. <b>nogo</b>), wird dieses
+    Gerät bei auf 1 gesetztem <b>autocreate</b> nicht angelegt.<br>
+
+    <a name="lastrun"></a>
+    <li>lastrun<br>
+    Dieses Reading zeigt, wann der CONNECTOR zuletzt erfolgreich Informationen
+    aus der Samsung SmartThings Cloud abgerufen hat.<br>
+
+    <a name="timeount_counter"></a>
+    <li>timeount_counter<br>
+    Dieses Reading zeigt, wie oft und wann zum letzten Mal die Abfrage der
+    Samsung SmartThings Cloud fehlgeschlagen ist.<br>
+
+    <a name="other"></a>
+    <li>andere Readings<br>
+    Alle anderen Readings der Endgeräte repräsentieren eine Capability, wie
+    Samsung es nennt. Diese Readings unterscheiden sich deutlich zwischen den
+    einzelnen Gerätetypen, weshalb hier nicht weiter auf sie eingegangen
+    wird.<br>
 
   </ul><br>
 
