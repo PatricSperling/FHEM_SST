@@ -1,8 +1,9 @@
 FHEM module SST last 3 changes:
+2020-09-26: Version 0.7.14
+ - fixed time conversion / added HASH interpretation for "value" values
+ - added documentation for some readings
 2020-09-25: Version 0.7.12
  - added reading timeount_counter to count cloud timeouts
 2020-09-24: Version 0.7.11
  - changed some default status settings
  - fixed SVG path
-2020-09-24: Version 0.7.10
- - fixed status string for fridge/freezer; fixed bug with device types containing underscore

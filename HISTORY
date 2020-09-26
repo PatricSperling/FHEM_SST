@@ -1,4 +1,7 @@
-2020-09-25 15:40:16 +0200 Version 0.7.12
+2020-09-26 19:00:13 +0200 Version 0.7.14
+2020-09-26 18:58:10 +0200 fixed time conversion / added HASH interpretation for "value" values
+2020-09-25 21:21:57 +0200 added documentation for some readings
+2020-09-25 15:40:28 +0200 Version 0.7.12
 2020-09-25 14:58:14 +0200 added reading timeount_counter to count cloud timeouts
 2020-09-24 23:39:11 +0200 Version 0.7.11
 2020-09-24 23:37:05 +0200 changed some default status settings
