@@ -1,6 +1,6 @@
 ################################################################################
 # 48_SST.pm
-#   Version 0.7.13 (2020-09-25)
+#   Version 0.7.14 (2020-09-26)
 #
 # SYNOPSIS
 #   Samsung SmartThings Connecton Module for FHEM
@@ -547,7 +547,6 @@ sub SST_getDeviceStatus($) {
                 }elsif( $capability eq 'custom.disabledCapabilities' ){
                     if( defined $jsonhash->{$baselevel}->{$component}->{$capability}->{disabledCapabilities}->{value} ){
                         # store it for later
-                        # TODO: probably needs some tendering first (disabled in one component, but not another...)
                         foreach ( @{ $jsonhash->{$baselevel}->{$component}->{$capability}->{disabledCapabilities}->{value} } ){
                             push( @disabled, $component . '_' . $_ );
                         }
@@ -567,22 +566,38 @@ sub SST_getDeviceStatus($) {
                                 my $reading = makeReadingName( $component . '_' . $capability . '_' . $module );
                                 my $thisvalue = '';
 
-                                # manage arrays - most likely options
+                                # manage arrays - most likely options (ARRAYs)
                                 if( ref $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} eq 'ARRAY' ){
                                     # this might always indicate value options... let's assume that for the time being
                                     push @setListHints, $component . '_' . $capability . ':' . join( ',', @{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} } );
                                     next;
                                 }
 
-                                # recalculate timestamp
-                                $thisvalue = $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value}; # hope this works, can't verify myself
-                                if( $thisvalue =~ m/^([0-9]{4})-([0-9]{2})-([0-9]{2})T([012][0-9]):([0-5][0-9]):([0-5][0-9])\..*Z/ ){
-                                    $thisvalue = FmtDateTime( fhemTimeGm( $6, $5, $4, $3, $2 - 1, $1 - 1900 ) );
-                                }
+                                if( ref $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} eq 'HASH' ){
+                                    # multiple values (HASHes)
+                                    foreach my $subval ( keys %{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} } ){
+                                        $thisvalue = $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value}->{$subval};
 
-                                # remember reading
-                                $readings{$reading} = $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value};
-                                    $readings{$reading} .= ' ' . $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{unit} if( exists $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{unit} and not $nounits );
+                                        # recalculate timestamps
+                                        $thisvalue = FmtDateTime( fhemTimeGm( $6, $5, $4, $3, $2 - 1, $1 - 1900 ) )
+                                            if $thisvalue =~ m/^([0-9]{4})-([0-9]{2})-([0-9]{2})T([012][0-9]):([0-5][0-9]):([0-5][0-9])\..*Z/;
+
+                                        # remember reading
+                                        my $subreading = makeReadingName( $reading . '-' . $subval );
+                                        $readings{$subreading} = $thisvalue;
+                                    }
+                                }else{
+                                    $thisvalue = $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value};
+
+                                    # recalculate timestamps
+                                    $thisvalue = FmtDateTime( fhemTimeGm( $6, $5, $4, $3, $2 - 1, $1 - 1900 ) )
+                                        if $thisvalue =~ m/^([0-9]{4})-([0-9]{2})-([0-9]{2})T([012][0-9]):([0-5][0-9]):([0-5][0-9])\..*Z/;
+
+                                    # remember reading
+                                    $readings{$reading} = $thisvalue;
+                                    $readings{$reading} .= ' ' . $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{unit}
+                                        if( exists $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{unit} and not $nounits );
+                                }
                                 next;
                             }
 
