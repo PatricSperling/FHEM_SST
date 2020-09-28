@@ -353,6 +353,98 @@ sub SST_Set($@) {
     }else{
         return "Device type '$device_type' is currently not supported!";
     }
+
+    # TODO: well, just about everything ;)
+    my ($device, $command, $mode) = @_;
+    my $hash        = $defs{$device};
+    my $device_type = AttrVal($device, 'device_type', 'CONNECTOR');
+    my $data        = {};
+    my $capa        = '';
+    my $cmd         = '';
+    my $cmdargs     = '';
+
+    # differ capabilities on device type
+    if( $device_type eq 'CONNECTOR' ){
+        ##############################
+        # CONNECTOR DEVICE
+        return 'connector device does not support set commands';
+
+    # ENTRYPOINT new device types (5/5)
+    }elsif( $device_type eq 'refrigerator' ){
+        ##############################
+        # REFRIGERATOR
+        if( $command eq 'setRefrigerationSetpoint' ){
+            $capa    = 'refrigerationSetpoint';
+            $capa    = 'setpoint';
+            $cmd     = 'setRefrigerationSetpoint';
+            $cmdargs = [$mode];
+        }elsif( $command eq 'rapidCooling' ){
+            $capa    = 'rapidCooling';
+            $cmd     = 'setRapidCooling';
+            $cmdargs = [$mode];
+        }else{
+            return 'not jet implemented';
+        }
+
+    }elsif( $device_type eq 'vacuumCleaner' ){
+        ##############################
+        # VACUUM CLEANER
+        if( $command eq 'recharge' ){
+            $capa    = 'robotCleanerMovement';
+            $cmd     = 'setRobotCleanerMovement';
+            $cmdargs = ['homing'];
+        }elsif( $command eq 'turbo' ){
+            $capa    = 'robotCleanerTurboMode';
+            $cmd     = 'setRobotCleanerTurboMode';
+            $cmdargs = [$mode];
+        }elsif( $command eq 'mode' ){
+            $capa    = 'robotCleanerCleaningMode';
+            $cmd     = 'setRobotCleanerCleaningMode';
+            $cmdargs = [$mode];
+        }
+
+    }else{
+        ##############################
+        # OTHER DEVICE TYPES
+        return "Device type $device_type has not jet been implemented.\nPlease consult the corresponding FHEM forum thread:\nhttps://forum.fhem.de/index.php/topic,91090.0.html\nIf you don't speak german, just phrase your issue in english, dutch or french.";
+
+    }
+
+    return unless $capa and $cmd;
+    $data = {'commands' => [{'capability' => $capa, 'command' => $cmd, 'arguments' => $cmdargs}]};
+    #$data = {'commands' => [{'capability' => 'robotCleanerTurboMode', 'command' => 'setRobotCleanerTurboMode', 'arguments' => [$mode]}]};
+    #$data = {'commands' => [{'capability' => 'refrigerationSetpoint', 'command' => 'setRefrigerationSetpoint', 'arguments' => [$mode]}]};
+    #$data = {'commands' => [{'capability' => 'setRefrigerationSetpoint', 'command' => $mode, 'arguments' => ['C']}]};
+    #$data = {'commands' => [{'capability' => 'refrigerationSetpoint', 'command' => "setRefrigerationSetpoint($mode)", 'arguments' => []}]};
+    # fuckfuckfuck, warum geht der dreck nicht :(
+
+    my $jsoncmd = encode_utf8(encode_json($data));
+    my $msg = "==== command:\n$jsoncmd\n";
+    Log3 $hash, 5, "SST ($device): JSON STRUCT (device set $capa):\n" . $jsoncmd;
+
+    # push command into cloud
+    my $webpost  = HTTP::Request->new('POST', 
+        'https://api.smartthings.com/v1/devices/' . AttrVal($device, 'device_id', undef) . '/commands',
+        ['Authorization' => "Bearer: " . AttrVal($device, 'token', undef)],
+        $jsoncmd
+    );
+    my $webagent = LWP::UserAgent->new( timeout => AttrNum($device, 'timeout', 3) );
+    my $jsondata = $webagent->request($webpost);
+
+    unless( $jsondata->content){
+        Log3 $hash, 2, "SST ($device): setting $capa / $cmd / $cmdargs failed (empty JSON string)";
+        return "Could not set $capa for Samsung SmartThings Device $device.";
+    }
+    #my $jsonhash = decode_json($jsondata->content);
+    #Log3 $hash, 5, "SST ($device): JSON STRUCT (device set $capa):\n" . Dumper($jsonhash);
+    my $jsondump = $jsondata->content;
+    $jsondump =~ s/[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/g;
+    Log3 $hash, 5, "SST ($device): JSON STRUCT (device set $capa reply):\n$jsondump";
+    $msg .= "==== reply\n$jsondump\n";
+
+    return $msg;
+    SST_getDeviceStatus($hash->{NAME}, 'status');
+    return undef;
 }
 
 #####################################
@@ -711,102 +803,6 @@ sub SST_getDeviceStatus($$) {
     }
 
     return Dumper($jsonhash) if AttrNum($device, 'verbose', 0) >= 5;
-    return undef;
-}
-
-#####################################
-# SET COMMAND: execute some command
-sub SST_sendCommand($@) {
-    # TODO: well, just about everything ;)
-    my ($device, $command, $mode) = @_;
-    my $hash        = $defs{$device};
-    my $device_type = AttrVal($device, 'device_type', 'CONNECTOR');
-    my $data        = {};
-    my $capa        = '';
-    my $cmd         = '';
-    my $cmdargs     = '';
-
-    # differ capabilities on device type
-    if( $device_type eq 'CONNECTOR' ){
-        ##############################
-        # CONNECTOR DEVICE
-        return 'connector device does not support set commands';
-
-    # ENTRYPOINT new device types (5/5)
-    }elsif( $device_type eq 'refrigerator' ){
-        ##############################
-        # REFRIGERATOR
-        if( $command eq 'setRefrigerationSetpoint' ){
-            $capa    = 'refrigerationSetpoint';
-            $capa    = 'setpoint';
-            $cmd     = 'setRefrigerationSetpoint';
-            $cmdargs = [$mode];
-        }elsif( $command eq 'rapidCooling' ){
-            $capa    = 'rapidCooling';
-            $cmd     = 'setRapidCooling';
-            $cmdargs = [$mode];
-        }else{
-            return 'not jet implemented';
-        }
-
-    }elsif( $device_type eq 'vacuumCleaner' ){
-        ##############################
-        # VACUUM CLEANER
-        if( $command eq 'recharge' ){
-            $capa    = 'robotCleanerMovement';
-            $cmd     = 'setRobotCleanerMovement';
-            $cmdargs = ['homing'];
-        }elsif( $command eq 'turbo' ){
-            $capa    = 'robotCleanerTurboMode';
-            $cmd     = 'setRobotCleanerTurboMode';
-            $cmdargs = [$mode];
-        }elsif( $command eq 'mode' ){
-            $capa    = 'robotCleanerCleaningMode';
-            $cmd     = 'setRobotCleanerCleaningMode';
-            $cmdargs = [$mode];
-        }
-
-    }else{
-        ##############################
-        # OTHER DEVICE TYPES
-        return "Device type $device_type has not jet been implemented.\nPlease consult the corresponding FHEM forum thread:\nhttps://forum.fhem.de/index.php/topic,91090.0.html\nIf you don't speak german, just phrase your issue in english, dutch or french.";
-
-    }
-
-    return unless $capa and $cmd;
-    $data = {'commands' => [{'capability' => $capa, 'command' => $cmd, 'arguments' => $cmdargs}]};
-    #$data = {'commands' => [{'capability' => 'robotCleanerTurboMode', 'command' => 'setRobotCleanerTurboMode', 'arguments' => [$mode]}]};
-    #$data = {'commands' => [{'capability' => 'refrigerationSetpoint', 'command' => 'setRefrigerationSetpoint', 'arguments' => [$mode]}]};
-    #$data = {'commands' => [{'capability' => 'setRefrigerationSetpoint', 'command' => $mode, 'arguments' => ['C']}]};
-    #$data = {'commands' => [{'capability' => 'refrigerationSetpoint', 'command' => "setRefrigerationSetpoint($mode)", 'arguments' => []}]};
-    # fuckfuckfuck, warum geht der dreck nicht :(
-
-    my $jsoncmd = encode_utf8(encode_json($data));
-    my $msg = "==== command:\n$jsoncmd\n";
-    Log3 $hash, 5, "SST ($device): JSON STRUCT (device set $capa):\n" . $jsoncmd;
-
-    # push command into cloud
-    my $webpost  = HTTP::Request->new('POST', 
-        'https://api.smartthings.com/v1/devices/' . AttrVal($device, 'device_id', undef) . '/commands',
-        ['Authorization' => "Bearer: " . AttrVal($device, 'token', undef)],
-        $jsoncmd
-    );
-    my $webagent = LWP::UserAgent->new( timeout => AttrNum($device, 'timeout', 3) );
-    my $jsondata = $webagent->request($webpost);
-
-    unless( $jsondata->content){
-        Log3 $hash, 2, "SST ($device): setting $capa / $cmd / $cmdargs failed (empty JSON string)";
-        return "Could not set $capa for Samsung SmartThings Device $device.";
-    }
-    #my $jsonhash = decode_json($jsondata->content);
-    #Log3 $hash, 5, "SST ($device): JSON STRUCT (device set $capa):\n" . Dumper($jsonhash);
-    my $jsondump = $jsondata->content;
-    $jsondump =~ s/[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/g;
-    Log3 $hash, 5, "SST ($device): JSON STRUCT (device set $capa reply):\n$jsondump";
-    $msg .= "==== reply\n$jsondump\n";
-
-    return $msg;
-    SST_getDeviceStatus($hash->{NAME}, 'status');
     return undef;
 }
 
