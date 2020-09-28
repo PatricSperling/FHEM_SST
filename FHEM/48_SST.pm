@@ -1,6 +1,6 @@
 ################################################################################
 # 48_SST.pm
-#   Version 0.7.14 (2020-09-26)
+#   Version 0.7.15 (2020-09-28)
 #
 # SYNOPSIS
 #   Samsung SmartThings Connecton Module for FHEM
@@ -53,7 +53,7 @@ sub SST_Initialize($) {
     #$hash->{ReadFn}     = 'SST_Read';
     #$hash->{parseParams} = 1;
 
-    # ENTRYPOINT new device types (2/5)
+    # ENTRYPOINT new device types (2/4)
     my @attrList = qw(
     autocreate:0,1,2
     autoextend_setList:1,0
@@ -157,7 +157,7 @@ sub SST_Define($$) {
             $def_interval = 300 if $def_interval < 0;
             $attr{$aArguments[0]}{interval} = $def_interval;
             $attr{$aArguments[0]}{device_id} = $tokenOrDevice if $tokenOrDevice;
-            # ENTRYPOINT new device types (3/5)
+            # ENTRYPOINT new device types (3/4)
             if( lc $attr{$aArguments[0]}{device_type} eq 'refrigerator' ){
                 $attr{$aArguments[0]}{icon}          = 'samsung_sidebyside';
                 $attr{$aArguments[0]}{setList}       = 'fridge_temperature rapidCooling:off,on rapidFreezing:off,on defrost:on,off waterFilterResetType:noArg';
@@ -282,7 +282,7 @@ sub SST_Get($@) {
     my $name = shift @aArguments;
     my $command  = shift @aArguments;
     if( $command eq 'device_list' ){
-        return SST_getDeviceDetection($hash->{NAME});
+        return SST_getDeviceDetection($hash->{NAME} );
     }elsif( $command eq 'status' or $command eq 'x_options' ){
         return SST_getDeviceStatus( $hash->{NAME}, $command );
     }else{
@@ -318,131 +318,117 @@ sub SST_ProcessTimer($) {
 # SET COMMAND
 sub SST_Set($@) {
     my ($hash, @aArguments) = @_;
-
     return '"set SST" needs at least one argument' if (int(@aArguments) < 2);
 
-    my $name    = shift @aArguments;
-    my $command = shift @aArguments;
-    my $mode    = shift @aArguments;
-    my $value   = join('', @aArguments);
-    my $device_type  = AttrVal( $name, 'device_type', 'CONNECTOR' );
+    # read arguments
+    my $device      = shift @aArguments;
+    my $reading     = shift @aArguments;
+    #my $mode        = shift @aArguments;
+    #my $value       = join(' ', @aArguments);
+    my $device_type = AttrVal( $device, 'device_type', 'CONNECTOR' );
+    my $connector   = AttrVal( $device, 'IODev', undef );
+    my $msg         = undef;
+    my $token       = undef;
+    my $data        = undef;
+    my $command     = '';
 
     # we need this for FHEMWEB
-    if( $command eq '?' ){
-        return "Unknown argument $command, choose one of " if $device_type eq 'CONNECTOR';
-        my $setlist = AttrVal( $name, 'setList', '' );
-        return "Unknown argument $command, choose one of $setlist"; #. join(' ', keys %SST_sets);
+    if( $reading eq '?' ){
+        return "Unknown argument $reading, choose one of " if $device_type eq 'CONNECTOR';
+        my $setlist = AttrVal( $device, 'setList', '' );
+        return "Unknown argument $reading, choose one of $setlist";
     }
 
-    # ENTRYPOINT new device types (4/5)
-    # differ device types
-    if( $device_type eq 'refrigerator' ){
-        if( $command eq 'fridge_temperature' ){
-            SST_sendCommand($name, 'setRefrigerationSetpoint', $mode);
-        }elsif( $command eq 'rapidCooling' ){
-            SST_sendCommand($name, $command, $mode);
-        }else{
-            return "Command '$command' is currently not supported for device type '$device_type'!";
-        }
-    }elsif( $device_type eq 'vacuumCleaner' ){
-        if( $command eq 'recharge' or $command eq 'mode' or $command eq 'turbo' ){
-            SST_sendCommand($name, $command, $mode);
-        }else{
-            return "Command '$command' is currently not supported for device type '$device_type'!";
-        }
+    # unless CONNECTOR, get token
+    return 'connector device does not support set commands' if $device_type eq 'CONNECTOR';
+    return "Could not identify IO Device for $device - please check configuration." unless $connector;
+    $token = InternalVal( $connector, 'TOKEN', undef );
+    return "Could not identify Samsung SmartThings token for $device - please check configuration." unless $token;
+
+    # exit if reading is unknown
+	return "Could not identify internal name for value $reading!" unless defined $hash->{'.R2CCC'}->{$reading};
+
+    # exit if reading not defined in setList
+    # TODO
+
+    # split up communication path
+    my ($component, $capability, $module) = split( '_', $hash->{'.R2CCC'}->{$reading} );
+    Log3 $hash, 4, "SST ($device): set $component/$capability/$module/" . join( ',', @aArguments );
+
+    # try to auto-identify command name
+    if( $module eq 'switch' ){
+        $command = shift @aArguments;
+    }elsif( $capability eq 'thermostatCoolingSetpoint' ){
+        $command = 'setCoolingSetpoint';
+    }
+
+    #$data = { 'commands' =>  [ { 'component' => 'cooler', 'capability' => 'refrigerationSetpoint', 'command' => 'setRefrigerationSetpoint', 'arguments' => [ 4 ] } ] };
+    if( $#aArguments == -1 ){
+        $data = { 'commands' =>  [ { 'component' => $component, 'capability' => $capability, 'command' => $command, 'arguments' => [ ] } ] };
     }else{
-        return "Device type '$device_type' is currently not supported!";
+        $data = { 'commands' =>  [ { 'component' => $component, 'capability' => $capability, 'command' => $command, 'arguments' => [ @aArguments ] } ] };
     }
-
-    # TODO: well, just about everything ;)
-    my ($device, $command, $mode) = @_;
-    my $hash        = $defs{$device};
-    my $device_type = AttrVal($device, 'device_type', 'CONNECTOR');
-    my $data        = {};
-    my $capa        = '';
-    my $cmd         = '';
-    my $cmdargs     = '';
-
-    # differ capabilities on device type
-    if( $device_type eq 'CONNECTOR' ){
-        ##############################
-        # CONNECTOR DEVICE
-        return 'connector device does not support set commands';
-
-    # ENTRYPOINT new device types (5/5)
-    }elsif( $device_type eq 'refrigerator' ){
-        ##############################
-        # REFRIGERATOR
-        if( $command eq 'setRefrigerationSetpoint' ){
-            $capa    = 'refrigerationSetpoint';
-            $capa    = 'setpoint';
-            $cmd     = 'setRefrigerationSetpoint';
-            $cmdargs = [$mode];
-        }elsif( $command eq 'rapidCooling' ){
-            $capa    = 'rapidCooling';
-            $cmd     = 'setRapidCooling';
-            $cmdargs = [$mode];
-        }else{
-            return 'not jet implemented';
-        }
-
-    }elsif( $device_type eq 'vacuumCleaner' ){
-        ##############################
-        # VACUUM CLEANER
-        if( $command eq 'recharge' ){
-            $capa    = 'robotCleanerMovement';
-            $cmd     = 'setRobotCleanerMovement';
-            $cmdargs = ['homing'];
-        }elsif( $command eq 'turbo' ){
-            $capa    = 'robotCleanerTurboMode';
-            $cmd     = 'setRobotCleanerTurboMode';
-            $cmdargs = [$mode];
-        }elsif( $command eq 'mode' ){
-            $capa    = 'robotCleanerCleaningMode';
-            $cmd     = 'setRobotCleanerCleaningMode';
-            $cmdargs = [$mode];
-        }
-
-    }else{
-        ##############################
-        # OTHER DEVICE TYPES
-        return "Device type $device_type has not jet been implemented.\nPlease consult the corresponding FHEM forum thread:\nhttps://forum.fhem.de/index.php/topic,91090.0.html\nIf you don't speak german, just phrase your issue in english, dutch or french.";
-
-    }
-
-    return unless $capa and $cmd;
-    $data = {'commands' => [{'capability' => $capa, 'command' => $cmd, 'arguments' => $cmdargs}]};
-    #$data = {'commands' => [{'capability' => 'robotCleanerTurboMode', 'command' => 'setRobotCleanerTurboMode', 'arguments' => [$mode]}]};
-    #$data = {'commands' => [{'capability' => 'refrigerationSetpoint', 'command' => 'setRefrigerationSetpoint', 'arguments' => [$mode]}]};
-    #$data = {'commands' => [{'capability' => 'setRefrigerationSetpoint', 'command' => $mode, 'arguments' => ['C']}]};
-    #$data = {'commands' => [{'capability' => 'refrigerationSetpoint', 'command' => "setRefrigerationSetpoint($mode)", 'arguments' => []}]};
-    # fuckfuckfuck, warum geht der dreck nicht :(
-
     my $jsoncmd = encode_utf8(encode_json($data));
-    my $msg = "==== command:\n$jsoncmd\n";
-    Log3 $hash, 5, "SST ($device): JSON STRUCT (device set $capa):\n" . $jsoncmd;
+    Log3 $hash, 5, "SST ($device): JSON STRUCT (device set $capability):\n" . $jsoncmd;
 
     # push command into cloud
     my $webpost  = HTTP::Request->new('POST', 
         'https://api.smartthings.com/v1/devices/' . AttrVal($device, 'device_id', undef) . '/commands',
-        ['Authorization' => "Bearer: " . AttrVal($device, 'token', undef)],
+        ['Authorization' => "Bearer: $token"],
         $jsoncmd
     );
-    my $webagent = LWP::UserAgent->new( timeout => AttrNum($device, 'timeout', 3) );
+    my $webagent = LWP::UserAgent->new( timeout => AttrNum($device, 'set_timeout', 15) );
     my $jsondata = $webagent->request($webpost);
+    Log3 $hash, 5, "SST ($device): JSON STRUCT (device set $capability reply):\n$jsondata->content";
 
-    unless( $jsondata->content){
-        Log3 $hash, 2, "SST ($device): setting $capa / $cmd / $cmdargs failed (empty JSON string)";
-        return "Could not set $capa for Samsung SmartThings Device $device.";
+    #unless( $jsondata->content){
+        #Log3 $hash, 2, "SST ($device): setting $capa / $cmd / " . join(',', $cmdargs) . " failed (empty JSON string)";
+        #return "Could not set $capability for Samsung SmartThings Device $device.";
+    #}
+    if( not $jsondata->content ){
+        Log3 $hash, 2, "SST ($device): setting $component/$capability/$command - sending failed";
+        $hash->{STATE} = 'cloud connection error';
+        return "Could not set $capability for Samsung SmartThings devices.\nPlease check your configuration.";
+    }elsif( $jsondata->content =~ m/^read timeout/ ){
+        Log3 $hash, 3, "SST ($device): setting $component/$capability/$command - probably failed: cloud query timed out";
+        readingsSingleUpdate($hash, 'set_timeouts', AttrNum($device, 'set_timeouts', 0) + 1, 1);
+        readingsSingleUpdate($hash, 'set_timeouts_row', AttrNum($device, 'set_timeouts_row', 0) + 1, 1);
+        $hash->{STATE} = 'cloud timeout';
+
+	    # update readings - it could have been successful
+        SST_getDeviceStatus($hash->{NAME}, 'status');
+        return "Updating $capability may have failed due to timeout." if AttrNum($device, 'verbose', 3) >= 4;
+    }elsif( $jsondata->content !~ m/^\{"/ ){
+        Log3 $hash, 2, "SST ($device): setting $component/$capability/$command - failed: cloud did not answer with JSON string:\n" . $jsondata->content;
+        $hash->{STATE} = 'cloud return data error';
+        return "Samsung SmartThings did not return valid JSON data string.\nPlease check log file for detailed information if this error persists.";
     }
-    #my $jsonhash = decode_json($jsondata->content);
-    #Log3 $hash, 5, "SST ($device): JSON STRUCT (device set $capa):\n" . Dumper($jsonhash);
-    my $jsondump = $jsondata->content;
-    $jsondump =~ s/[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/g;
-    Log3 $hash, 5, "SST ($device): JSON STRUCT (device set $capa reply):\n$jsondump";
-    $msg .= "==== reply\n$jsondump\n";
+
+    # reset timeout counter if neccessarry
+    readingsSingleUpdate($hash, 'set_timeouts_row', 0, 1) if ReadingsNum($device, 'set_timeouts_row', 0);
+
+	# on error
+    my $jsonhash = decode_json($jsondata->content);
+	if( defined $jsonhash->{error} ){
+		Log3 $hash, 2, "SST ($device): setting $component/$capability/$command failed: full JSON command and reply:\n$jsoncmd\n" . $jsondata->content;
+		$msg = "Command has results:\n$jsoncmd\n" . $jsondata->content;
+		return "Command failed:\n" . $jsonhash->{error}->{code} . ": " . $jsonhash->{error}->{message} . "\n$msg";
+	}elsif( defined $jsonhash->{results} ){
+        if( $jsonhash->{results}->[0]->{status} eq 'ACCEPTED' ){
+		    Log3 $hash, 4, "SST ($device): setting $component/$capability/$command was successfuly accepted";
+            #$msg = 'Variable set.';
+            $msg = undef;
+        }else{
+		    Log3 $hash, 3, "SST ($device): setting $component/$capability/$command did not fail with response:\n" . $jsondata->content;
+		    $msg = "Command has results:\n$jsoncmd\n" . $jsondata->content;
+        }
+    }else{
+	    Log3 $hash, 3, "SST ($device): setting $component/$capability/$command did neither fail nor was successful with response:\n" . $jsondata->content;
+		$msg = "Command unambigious:\n$jsoncmd\n" . $jsondata->content;
+    }
 
     return $msg;
+	# update readings
     SST_getDeviceStatus($hash->{NAME}, 'status');
     return undef;
 }
@@ -540,7 +526,7 @@ sub SST_getDeviceDetection($) {
                     $tmpname =~ s/^(.{12}).*$/SST_$1/;
                 }
 
-                # ENTRYPOINT new device types (1/5)
+                # ENTRYPOINT new device types (1/4)
                 # try to determine the device type
                 my $subdevicetype = 'unknown';
                 if( $items->{items}[$i]->{name} =~ m/^\[(.*)\]/ ){
@@ -585,10 +571,10 @@ sub SST_getDeviceDetection($) {
 # device status/details or options
 sub SST_getDeviceStatus($$) {
     my ($device, $modus) = @_;
-    my $hash        = $defs{$device};
-    my $device_type = AttrVal($device, 'device_type', 'CONNECTOR');
-    my $nounits     = AttrNum($device, 'discard_units', 0);
-    my $token       = undef;
+    my $hash             = $defs{$device};
+    my $device_type      = AttrVal($device, 'device_type', 'CONNECTOR');
+    my $nounits          = AttrNum($device, 'discard_units', 0);
+    my $token            = undef;
     return "Cannot get $modus for the CONNECTOR device." if $device_type eq 'CONNECTOR';
     my $connector = AttrVal($device, 'IODev', undef);
     return "Could not identify IO Device for $device - please check configuration." unless $connector;
@@ -617,8 +603,6 @@ sub SST_getDeviceStatus($$) {
         $hash->{STATE} = 'cloud return data error';
         return "Samsung SmartThings cloud did not return valid JSON data string.\nPlease check log file for detailed information if this error repeats.";
     }
-    Log3 $hash, 5, "SST ($device): raw JSON data?: " . substr( $jsondata->content, 0, 40 ) . '...';
-    my $jsonhash = decode_json($jsondata->content);
 
     # reset timeout counter
     readingsSingleUpdate($hash, 'get_timeouts_row', 0, 1);
@@ -674,7 +658,7 @@ sub SST_getDeviceStatus($$) {
                                     # this might always indicate value options... let's assume that for the time being
                                     push @setListHints, $component . '_' . $capability . ':' . join( ',', @{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} } );
                                     $ccc2cmd{$reading} = join( ',', @{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} } );
-                                    next;
+				                    next;
                                 }
 
                                 if( ref $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} eq 'HASH' ){
@@ -763,22 +747,22 @@ sub SST_getDeviceStatus($$) {
             $rdn2ccc{$reading} = $key;
             # ENTRYPOINT new set options
             if( defined $ccc2cmd{$key} ){
-                $setList .= " $reading:$ccc2cmd{$key}";
+                $setList .= " $reading:$ccc2cmd{$key}"; 
             }elsif( $key =~ m/_switch$/ ){
-                $setList .= " $reading:on,off";
+                $setList .= " $reading:on,off"; 
             }elsif( $key =~ m/^main_refrigeration_rapid/ ){
-                $setList .= " $reading:On,Off";
+                $setList .= " $reading:On,Off"; 
             }elsif( $key =~ m/Setpoint$/ ){
-                $setList .= " $reading";
+                $setList .= " $reading"; 
             }
         }
-        $hash->{'.R2CCC'} = { %rdn2ccc };
+	    $hash->{'.R2CCC'} = { %rdn2ccc };
         if( $modus eq 'x_options' ){
             $setList =~ s/^ //;
             $attr{$device}{setList} = $setList;
         }
         #return undef;
-        return "r2ccc:\n" . Dumper( $hash->{'.R2CCC'} );
+	    return "r2ccc:\n" . Dumper( $hash->{'.R2CCC'} );
     }
 
     # update setList if desired
