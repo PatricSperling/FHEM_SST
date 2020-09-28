@@ -283,13 +283,13 @@ sub SST_Get($@) {
     my $command  = shift @aArguments;
     if( $command eq 'device_list' ){
         return SST_getDeviceDetection($hash->{NAME});
-    }elsif( $command eq 'status' ){
-        return SST_getDeviceStatus( $hash->{NAME});
+    }elsif( $command eq 'status' or $command eq 'x_options' ){
+        return SST_getDeviceStatus( $hash->{NAME}, $command );
     }else{
         if( AttrVal( $name, 'device_type', 'CONNECTOR' ) eq 'CONNECTOR' ){
             return "Unknown argument $command, choose one of device_list:noArg";
         }else{
-            return "Unknown argument $command, choose one of status:noArg";
+            return "Unknown argument $command, choose one of status:noArg x_options:noArg";
         }
     }
 }
@@ -306,7 +306,7 @@ sub SST_ProcessTimer($) {
         if( AttrVal( $device, 'device_type', 'CONNECTOR' ) eq 'CONNECTOR' ){
             SST_getDeviceDetection($device);
         }else{
-            SST_getDeviceStatus($device);
+            SST_getDeviceStatus($device, 'status');
         }
         Log3 $hash, 4, "SST ($device): reschedule for epoch " . ( gettimeofday() + $interval );
         InternalTimer( gettimeofday() + $interval, 'SST_ProcessTimer', $hash );
@@ -490,20 +490,17 @@ sub SST_getDeviceDetection($) {
 }
 
 #####################################
-# GET COMMAND: device status/details
-sub SST_getDeviceStatus($) {
-    my ($device)    = @_;
+# device status/details or options
+sub SST_getDeviceStatus($$) {
+    my ($device, $modus) = @_;
     my $hash        = $defs{$device};
     my $device_type = AttrVal($device, 'device_type', 'CONNECTOR');
     my $nounits     = AttrNum($device, 'discard_units', 0);
     my $token       = undef;
-    if( $device_type eq 'CONNECTOR' ){
-        $token = $hash->{TOKEN};
-    }else{
-        my $connector = AttrVal($device, 'IODev', undef);
-        return "Could not identify IO Device for $device - please check configuration." unless $connector;
-        $token = InternalVal( $connector, 'TOKEN', undef );
-    }
+    return "Cannot get $modus for the CONNECTOR device." if $device_type eq 'CONNECTOR';
+    my $connector = AttrVal($device, 'IODev', undef);
+    return "Could not identify IO Device for $device - please check configuration." unless $connector;
+    $token = InternalVal( $connector, 'TOKEN', undef );
     return "Could not identify Samsung SmartThings token for $device - please check configuration." unless $token;
 
     # poll cloud for all status objects (all components)
@@ -519,7 +516,10 @@ sub SST_getDeviceStatus($) {
         return "Could not obtain status for Samsung SmartThings Device $device.\nPlease check your configuration.";
     }elsif( $jsondata->content =~ m/^read timeout/ ){
         Log3 $hash, 3, "SST ($device): get status - cloud query timed out";
-        readingsSingleUpdate($hash, 'timeout_counter', AttrNum($device, 'timeout_counter', 0) + 1, 1);
+        readingsSingleUpdate($hash, 'get_timeouts', AttrNum($device, 'get_timeouts', 0) + 1, 1);
+        readingsSingleUpdate($hash, 'get_timeouts_row', AttrNum($device, 'get_timeouts_row', 0) + 1, 1);
+        $hash->{STATE} = 'cloud timeout';
+        return "Data retrieval timed out.";
     }elsif( $jsondata->content !~ m/^\{"/ ){
         Log3 $hash, 2, "SST ($device): get status - cloud did not answer with JSON string:\n" . $jsondata->content;
         $hash->{STATE} = 'cloud return data error';
@@ -528,13 +528,17 @@ sub SST_getDeviceStatus($) {
     Log3 $hash, 5, "SST ($device): raw JSON data?: " . substr( $jsondata->content, 0, 40 ) . '...';
     my $jsonhash = decode_json($jsondata->content);
 
-    # reset timout counter if neccessarry
+    # reset timeout counter
     readingsSingleUpdate($hash, 'get_timeouts_row', 0, 1);
 
+    Log3 $hash, 5, "SST ($device): raw JSON data?: " . substr( $jsondata->content, 0, 40 ) . '...';
+    my $jsonhash = decode_json($jsondata->content);
+
     # TODO: possibly read in some manual disabled capabilities from attribute or reading
-    my @setListHints = ();
-    my @disabled = ();
-    my %readings = ();
+    my @setListHints   = ();
+    my %ccc2cmd        = ();
+    my @disabled       = ();
+    my %readings       = ();
     my $brief_readings = AttrNum($device, 'brief_readings', 1);
 
     # parse JSON struct
@@ -577,6 +581,7 @@ sub SST_getDeviceStatus($) {
                                 if( ref $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} eq 'ARRAY' ){
                                     # this might always indicate value options... let's assume that for the time being
                                     push @setListHints, $component . '_' . $capability . ':' . join( ',', @{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} } );
+                                    $ccc2cmd{$reading} = join( ',', @{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} } );
                                     next;
                                 }
 
@@ -630,21 +635,59 @@ sub SST_getDeviceStatus($) {
     Log3 $hash, 5, "SST ($device): status query - identified setList options:\n" . Dumper( @setListHints );
 
     # create/update all readings
-    readingsBeginUpdate($hash);
-    readingsBulkUpdate( $hash, 'setList_hint', join( ' ', @setListHints ), 1 ) if $#setListHints >= 0;
-    EACHREADING: foreach my $key ( keys %readings ){
-        my $reading = $key;
-        foreach (@disabled){
-            my $regex = '^' . $_ . '_';
-            next EACHREADING if $key =~ m/$regex/;
+    if( $modus eq 'status' ){
+        readingsBeginUpdate($hash);
+        readingsBulkUpdate( $hash, 'setList_hint', join( ' ', @setListHints ), 1 ) if $#setListHints >= 0;
+        EACHREADING: foreach my $key ( keys %readings ){
+            my $reading = $key;
+            foreach (@disabled){
+                my $regex = '^' . $_ . '_';
+                next EACHREADING if $key =~ m/$regex/;
+            }
+            if( $brief_readings ){
+                $reading =~ s/_[^_]+_/_/; # remove middle part (capability)
+                $reading =~ s/^main_//i;  # remove main component
+            }
+            readingsBulkUpdate( $hash, $reading, $readings{$key}, 1 );
         }
-        if( $brief_readings ){
-            $reading =~ s/_[^_]+_/_/; # remove middle part (capability)
-            $reading =~ s/^main_//i;  # remove main component
-        }
-        readingsBulkUpdate( $hash, $reading, $readings{$key}, 1 );
+        readingsEndUpdate($hash, 1);
     }
-    readingsEndUpdate($hash, 1);
+
+    # store reading name mapping
+    if( $modus ne 'status' or not defined $hash->{'.R2CCC'} ){
+        # filling setList
+        my %rdn2ccc=();
+        my $setList = '';
+        EACHREADING: foreach my $key ( keys %readings ){
+            my $reading = $key;
+            foreach (@disabled){
+                my $regex = '^' . $_ . '_';
+                next EACHREADING if $key =~ m/$regex/;
+            }
+            if( $brief_readings ){
+                $reading =~ s/_[^_]+_/_/; # remove middle part (capability)
+                $reading =~ s/^main_//i;  # remove main component
+            }
+            $rdn2ccc{$reading} = $key;
+            # ENTRYPOINT new set options
+            if( defined $ccc2cmd{$key} ){
+                $setList .= " $reading:$ccc2cmd{$key}";
+            }elsif( $key =~ m/_switch$/ ){
+                $setList .= " $reading:on,off";
+            }elsif( $key =~ m/^main_refrigeration_rapid/ ){
+                $setList .= " $reading:On,Off";
+            }elsif( $key =~ m/Setpoint$/ ){
+                $setList .= " $reading";
+            }
+        }
+        $hash->{'.R2CCC'} = { %rdn2ccc };
+        if( $modus eq 'x_options' ){
+            $setList =~ s/^ //;
+            $attr{$device}{setList} = $setList;
+        }
+        #return undef;
+        return "r2ccc:\n" . Dumper( $hash->{'.R2CCC'} );
+    }
 
     # update setList if desired
     if( AttrNum($device, 'autoextend_setList', 0) > 0 ){
@@ -763,7 +806,7 @@ sub SST_sendCommand($@) {
     $msg .= "==== reply\n$jsondump\n";
 
     return $msg;
-    SST_getDeviceStatus($hash->{NAME});
+    SST_getDeviceStatus($hash->{NAME}, 'status');
     return undef;
 }
 
@@ -830,6 +873,12 @@ sub SST_sendCommand($@) {
     This is not available for the connector device and will refresh the list
     of available/useful SmartThings capabilities in the readings. The readings
     may differ greatly between different types of devices.<br>
+
+    <a name="x_options"></a>
+    <li>x_options<br>
+    This is not available for the connector device and will overwrite the
+    setList attribute with the corresponding information taken from the
+    device's cloud response.<br>
 
   </ul><br>
 
@@ -903,7 +952,7 @@ sub SST_sendCommand($@) {
     <a name="get_timeout"></a>
     <li>get_timeout<br>
     Defaults to 10 seconds.
-    This is the timeout for cloud get requests in seconds. If your get_timouts
+    This is the timeout for cloud get requests in seconds. If your get_timeouts
     reading gets excessive, increase this value.<br>
     Values too high might freeze FHEM on bad internet connections.<br>
 
@@ -934,7 +983,7 @@ sub SST_sendCommand($@) {
     <a name="set_timeout"></a>
     <li>set_timeout<br>
     Defaults to 15 seconds.
-    This is the timeout for cloud set requests in seconds. If your set_timouts
+    This is the timeout for cloud set requests in seconds. If your set_timeouts
     reading gets excessive, increase this value.<br>
     Values too high might freeze FHEM on bad internet connections.<br>
 
@@ -1032,6 +1081,12 @@ sub SST_sendCommand($@) {
     Hierüber wird der Gerätestatus über die Cloud abgefragt und in Readings
     geschrieben. Die verfügbaren Readings unterscheiden sich stark zwischen
     verschiedenen Gerätetypen.<br>
+
+    <a name="x_options"></a>
+    <li>x_options<br>
+    Diese Funktion steht beim Connector nicht zur Verfügung.<br>
+    Hierüber wird eine Liste möglicher Kommandos aus dem Gerätestatus der
+    Cloud erzeugt und in dem Attribut setList gespeichert.<br>
 
   </ul><br>
 
