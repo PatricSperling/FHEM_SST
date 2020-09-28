@@ -63,10 +63,11 @@ sub SST_Initialize($) {
     device_type:CONNECTOR,refrigerator,freezer,TV,washer,dryer,vacuumCleaner,room_a_c
     disable:1,0
     discard_units:0,1
+    get_timeout
     interval
     IODev
     setList
-    timeout
+    set_timeout
     );
     $hash->{AttrList} = join(" ", @attrList)." ".$readingFnAttributes;
 
@@ -170,12 +171,12 @@ sub SST_Define($$) {
                 $attr{$aArguments[0]}{icon}        = 'scene_washing_machine';
                 $attr{$aArguments[0]}{setList}     = 'washerMode:regular,heavy,rinse,spinDry state:pause,run,stop';
                 $attr{$aArguments[0]}{stateFormat} = 'machineState<br>washerJobState';
-            }elsif( lc $attr{$aArguments[0]}{device_type} eq 'vacuumCleaner' ){ # TODO: is this the correct identifyer?
-                $attr{$aArguments[0]}{icon}    = 'vacuum_top';
-                $attr{$aArguments[0]}{setList} = 'recharge:noArg turbo:on,off,silence mode:auto,part,repeat,manual,stop,map';
             }elsif( lc $attr{$aArguments[0]}{device_type} eq 'room_a_c' ){
                 $attr{$aArguments[0]}{icon}        = 'samsung_ac';
                 $attr{$aArguments[0]}{stateFormat} = 'airConditionerMode';
+            }elsif( lc $attr{$aArguments[0]}{device_type} eq 'vacuumCleaner' ){
+                $attr{$aArguments[0]}{icon}    = 'vacuum_top';
+                $attr{$aArguments[0]}{setList} = 'recharge:noArg turbo:on,off,silence mode:auto,part,repeat,manual,stop,map';
             }else{
                 $attr{$aArguments[0]}{icon} = 'unknown';
             }
@@ -272,7 +273,7 @@ sub SST_Undefine($$) {
 }
 
 #####################################
-# MAIN GET COMMAND
+# GET COMMAND
 sub SST_Get($@) {
     my ($hash, @aArguments) = @_;
     return '"get $hash->{name}" needs at least one argument' if int(@aArguments) < 2;
@@ -314,7 +315,7 @@ sub SST_ProcessTimer($) {
 }
 
 #####################################
-# MAIN SET COMMAND
+# SET COMMAND
 sub SST_Set($@) {
     my ($hash, @aArguments) = @_;
 
@@ -355,7 +356,7 @@ sub SST_Set($@) {
 }
 
 #####################################
-# GET COMMAND: device listing/creation
+# device listing/creation
 sub SST_getDeviceDetection($) {
     my ($device) = @_;
     my $hash     = $defs{$device};
@@ -369,22 +370,27 @@ sub SST_getDeviceDetection($) {
         'https://api.smartthings.com/v1/devices/',
         ['Authorization' => "Bearer: $token"]
     );
-    my $webagent = LWP::UserAgent->new( timeout => AttrNum($device, 'timeout', 3) );
+    my $webagent = LWP::UserAgent->new( timeout => AttrNum($device, 'get_timeout', 10) );
     my $jsondata = $webagent->request($webget);
 
     if( not $jsondata->content ){
         Log3 $hash, 2, "SST ($device): get device_list - retrieval failed";
-        return "Could not obtain listing for Samsung SmartThings devices.\nPlease check your configuration.";
         $hash->{STATE} = 'cloud connection error';
+        return "Could not obtain listing for Samsung SmartThings devices.\nPlease check your configuration.";
     }elsif( $jsondata->content =~ m/^read timeout/ ){
         Log3 $hash, 3, "SST ($device): get device_list - cloud query timed out";
-        readingsSingleUpdate($hash, 'timeount_counter', AttrNum($device, 'timeout_counter', 0) + 1, 1);
+        readingsSingleUpdate($hash, 'get_timeouts', AttrNum($device, 'get_timeouts', 0) + 1, 1);
+        readingsSingleUpdate($hash, 'get_timeouts_row', AttrNum($device, 'get_timeouts_row', 0) + 1, 1);
+        $hash->{STATE} = 'cloud timeout';
+        return 'Retrieval of device listing timed out.';
     }elsif( $jsondata->content !~ m/^\{"/ ){
         Log3 $hash, 2, "SST ($device): get device_list - cloud did not answer with JSON string:\n" . $jsondata->content;
-        return "Samsung SmartThings cloud did not return valid JSON data string.\nPlease check log file for detailed information if this error repeats.";
         $hash->{STATE} = 'cloud return data error';
+        return "Samsung SmartThings cloud did not return valid JSON data string.\nPlease check log file for detailed information if this error repeats.";
     }
-    #Log3 $hash, 5, "SST ($device): get device_list - JSON data?: " . substr( $jsondata->content, 0, 40 ) . '...';
+
+    # reset timeout counter
+    readingsSingleUpdate($hash, 'get_timeouts_row', 0, 1);
 
     my $items    = decode_json($jsondata->content);
     my $count    = scalar @{ $items->{items}};
@@ -505,24 +511,25 @@ sub SST_getDeviceStatus($) {
         'https://api.smartthings.com/v1/devices/' . AttrVal($device, 'device_id', undef) . '/status',
         ['Authorization' => "Bearer: $token"]
     );
-    my $webagent = LWP::UserAgent->new( timeout => AttrNum($device, 'timeout', 3) );
+    my $webagent = LWP::UserAgent->new( timeout => AttrNum($device, 'get_timeout', 10) );
     my $jsondata = $webagent->request($webget);
     if( not $jsondata->content ){
         Log3 $hash, 2, "SST ($device): get status - failed (empty string)";
-        return "Could not obtain status for Samsung SmartThings Device $device.\nPlease check your configuration.";
         $hash->{STATE} = 'cloud connection error';
+        return "Could not obtain status for Samsung SmartThings Device $device.\nPlease check your configuration.";
     }elsif( $jsondata->content =~ m/^read timeout/ ){
         Log3 $hash, 3, "SST ($device): get status - cloud query timed out";
         readingsSingleUpdate($hash, 'timeout_counter', AttrNum($device, 'timeout_counter', 0) + 1, 1);
     }elsif( $jsondata->content !~ m/^\{"/ ){
         Log3 $hash, 2, "SST ($device): get status - cloud did not answer with JSON string:\n" . $jsondata->content;
-        return "Samsung SmartThings cloud did not return valid JSON data string.\nPlease check log file for detailed information if this error repeats.";
         $hash->{STATE} = 'cloud return data error';
+        return "Samsung SmartThings cloud did not return valid JSON data string.\nPlease check log file for detailed information if this error repeats.";
     }
     Log3 $hash, 5, "SST ($device): raw JSON data?: " . substr( $jsondata->content, 0, 40 ) . '...';
     my $jsonhash = decode_json($jsondata->content);
 
-    #return Dumper($jsonhash) if AttrNum($device, 'pasp_dummy', 0);
+    # reset timout counter if neccessarry
+    readingsSingleUpdate($hash, 'get_timeouts_row', 0, 1);
 
     # TODO: possibly read in some manual disabled capabilities from attribute or reading
     my @setListHints = ();
@@ -627,13 +634,11 @@ sub SST_getDeviceStatus($) {
     readingsBulkUpdate( $hash, 'setList_hint', join( ' ', @setListHints ), 1 ) if $#setListHints >= 0;
     EACHREADING: foreach my $key ( keys %readings ){
         my $reading = $key;
-        # remove disabled items even if they have values
         foreach (@disabled){
             my $regex = '^' . $_ . '_';
             next EACHREADING if $key =~ m/$regex/;
         }
         if( $brief_readings ){
-            # WTF - if enabled, there will be no readings
             $reading =~ s/_[^_]+_/_/; # remove middle part (capability)
             $reading =~ s/^main_//i;  # remove main component
         }
@@ -895,6 +900,13 @@ sub SST_sendCommand($@) {
     the degree symbol for temperatures, resulting in readings like <b>4 C</b>
     instead of <b>4 °C</b>.<br>
 
+    <a name="get_timeout"></a>
+    <li>get_timeout<br>
+    Defaults to 10 seconds.
+    This is the timeout for cloud get requests in seconds. If your get_timouts
+    reading gets excessive, increase this value.<br>
+    Values too high might freeze FHEM on bad internet connections.<br>
+
     <a name="interval"></a>
     <li>interval<br>
     Defaults to <b>86400</b> (1 day) for the connector.<br>
@@ -919,11 +931,12 @@ sub SST_sendCommand($@) {
     change requests to the default.<br>
     If autoextend_setList is set, this list may grow on status updates.<br>
 
-    <a name="timeout"></a>
-    <li>timeout<br>
-    Defaults to 3 seconds.
-    This is the timeout for cloud requests in seconds. Setting this to low
-    values will avoid FHEM to freeze on bad internet connections.<br>
+    <a name="set_timeout"></a>
+    <li>set_timeout<br>
+    Defaults to 15 seconds.
+    This is the timeout for cloud set requests in seconds. If your set_timouts
+    reading gets excessive, increase this value.<br>
+    Values too high might freeze FHEM on bad internet connections.<br>
 
   </ul><br>
 
@@ -1094,6 +1107,13 @@ sub SST_sendCommand($@) {
     Temperaturen abgefragt werden, da hier sonst Readings wie <b>4 C</b>
     erzeugt werden, anstatt <b>4 °C</b>.<br>
 
+    <a name="get_timeout"></a>
+    <li>get_timeout<br>
+    Der Default ist 10 Sekunden.<br>
+    Dieser Wert bestimmt den Timeout für Abfragen aus der Samsung Cloud. Bei
+    hohen Werten im Reading get_timeouts sollte hier der Wert erhöht werden.<br>
+    Zu hohe Werte können zum zeitweisen Einfrieren von FHEM führen.<br>
+
     <a name="interval"></a>
     <li>interval<br>
     Für den Connector ist der Default <b>86400</b> (1 Tag).<br>
@@ -1116,12 +1136,13 @@ sub SST_sendCommand($@) {
     change requests to the default.<br>
     If autoextend_setList is set, this list may grow on status updates.<br>
 
-    <a name="timeout"></a>
-    <li>timeout<br>
-    Der Default ist 3 Sekunden.<br>
-    Dieser Wert bestimmt den Timeout für Cloud-Ab- und Anfragen. Niedrige
-    Werte verhindern, daß FHEM bei schlechten Internetanbindungen
-    einfriert.<br>
+    <a name="set_timeout"></a>
+    <li>set_timeout<br>
+    Der Default ist 15 Sekunden.<br>
+    Dieser Wert bestimmt den Timeout für in die Samsung Cloud zu sendende
+    Befehle. Bei hohen Werten im Reading set_timeouts sollte hier der Wert
+    erhöht werden.<br>
+    Zu hohe Werte können zum zeitweisen Einfrieren von FHEM führen.<br>
 
   </ul><br>
 
@@ -1137,15 +1158,34 @@ sub SST_sendCommand($@) {
     wurde. Setzt man den Wert auf etwas anderes (z.B. <b>nogo</b>), wird dieses
     Gerät bei auf 1 gesetztem <b>autocreate</b> nicht angelegt.<br>
 
+    <a name="get_timeouts"></a>
+    <li>get_timeouts<br>
+    Dieses Reading zeigt, wie oft und wann zum letzten Mal die Abfrage der
+    Samsung SmartThings Cloud wegen Timeouts fehlgeschlagen ist.<br>
+
+    <a name="get_timeouts_row"></a>
+    <li>get_timeouts_row<br>
+    Dieses Reading zeigt, wie oft hintereinander die Abfrage der Samsung
+    SmartThings Cloud aktuell wegen Timeouts fehlgeschlagen ist.<br>
+    Nach erfolgreicher Kommunikation wird dieser Wert zurückgesetzt.<br>
+
     <a name="lastrun"></a>
     <li>lastrun<br>
     Dieses Reading zeigt, wann der CONNECTOR zuletzt erfolgreich Informationen
     aus der Samsung SmartThings Cloud abgerufen hat.<br>
 
-    <a name="timeount_counter"></a>
-    <li>timeount_counter<br>
-    Dieses Reading zeigt, wie oft und wann zum letzten Mal die Abfrage der
-    Samsung SmartThings Cloud fehlgeschlagen ist.<br>
+    <a name="set_timeouts"></a>
+    <li>set_timeouts<br>
+    Dieses Reading zeigt, wie oft und wann zum letzten Mal das Absetzten eines
+    Befehls in der Samsung SmartThings Cloud wegen Timeouts fehlgeschlagen
+    ist.<br>
+
+    <a name="set_timeouts_row"></a>
+    <li>set_timeouts_row<br>
+    Dieses Reading zeigt, wie oft hintereinander das Absetzten eines Befehls
+    in der Samsung SmartThings Cloud aktuell wegen Timeouts fehlgeschlagen
+    ist.<br>
+    Nach erfolgreicher Kommunikation wird dieser Wert zurückgesetzt.<br>
 
     <a name="other"></a>
     <li>andere Readings<br>
