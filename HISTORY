@@ -1,4 +1,9 @@
-2020-09-26 19:00:13 +0200 Version 0.7.14
+2020-09-28 16:34:17 +0200 Version 0.7.15
+2020-09-28 16:24:46 +0200 partial device capability setting implementation
+2020-09-28 16:22:32 +0200 simplified structure
+2020-09-28 16:18:16 +0200 added get command x_option to set setList and store name mapping as internal
+2020-09-28 15:46:01 +0200 replaced timeout counter with individual counters
+2020-09-26 19:00:33 +0200 Version 0.7.14
 2020-09-26 18:58:10 +0200 fixed time conversion / added HASH interpretation for "value" values
 2020-09-25 21:21:57 +0200 added documentation for some readings
 2020-09-25 15:40:28 +0200 Version 0.7.12

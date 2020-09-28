@@ -1,9 +1,11 @@
 FHEM module SST last 3 changes:
+2020-09-28: Version 0.7.15
+ - partial device capability setting implementation
+ - simplified structure
+ - added get command x_option to set setList and store name mapping as internal
+ - replaced timeout counter with individual counters
 2020-09-26: Version 0.7.14
  - fixed time conversion / added HASH interpretation for "value" values
  - added documentation for some readings
 2020-09-25: Version 0.7.12
  - added reading timeount_counter to count cloud timeouts
-2020-09-24: Version 0.7.11
- - changed some default status settings
- - fixed SVG path
