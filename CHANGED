@@ -1,4 +1,7 @@
 FHEM module SST last 3 changes:
+2020-09-29: Version 0.7.16
+ - implemented pretty generic setting of values (time will tell)
+ - fixed log messages
 2020-09-28: Version 0.7.15
  - partial device capability setting implementation
  - simplified structure
@@ -7,5 +10,3 @@ FHEM module SST last 3 changes:
 2020-09-26: Version 0.7.14
  - fixed time conversion / added HASH interpretation for "value" values
  - added documentation for some readings
-2020-09-25: Version 0.7.12
- - added reading timeount_counter to count cloud timeouts
