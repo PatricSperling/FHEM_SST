@@ -412,6 +412,7 @@ sub SST_Set($@) {
 	if( defined $jsonhash->{error} ){
 		Log3 $hash, 2, "SST ($device): setting $component/$capability/$command failed: full JSON command and reply:\n$jsoncmd\n" . $jsondata->content;
 		$msg = "Command has results:\n$jsoncmd\n" . $jsondata->content;
+        $msg =~ s/,/,\n/g;
 		return "Command failed:\n" . $jsonhash->{error}->{code} . ": " . $jsonhash->{error}->{message} . "\n$msg";
 	}elsif( defined $jsonhash->{results} ){
         if( $jsonhash->{results}->[0]->{status} eq 'ACCEPTED' ){
@@ -589,17 +590,17 @@ sub SST_getDeviceStatus($$) {
     my $webagent = LWP::UserAgent->new( timeout => AttrNum($device, 'get_timeout', 10) );
     my $jsondata = $webagent->request($webget);
     if( not $jsondata->content ){
-        Log3 $hash, 2, "SST ($device): get status - failed (empty string)";
+        Log3 $hash, 2, "SST ($device): get $modus - failed (empty string)";
         $hash->{STATE} = 'cloud connection error';
-        return "Could not obtain status for Samsung SmartThings Device $device.\nPlease check your configuration.";
+        return "Could not obtain $modus for Samsung SmartThings Device $device.\nPlease check your configuration.";
     }elsif( $jsondata->content =~ m/^read timeout/ ){
-        Log3 $hash, 3, "SST ($device): get status - cloud query timed out";
+        Log3 $hash, 3, "SST ($device): get $modus - cloud query timed out";
         readingsSingleUpdate($hash, 'get_timeouts', AttrNum($device, 'get_timeouts', 0) + 1, 1);
         readingsSingleUpdate($hash, 'get_timeouts_row', AttrNum($device, 'get_timeouts_row', 0) + 1, 1);
         $hash->{STATE} = 'cloud timeout';
         return "Data retrieval timed out.";
     }elsif( $jsondata->content !~ m/^\{"/ ){
-        Log3 $hash, 2, "SST ($device): get status - cloud did not answer with JSON string:\n" . $jsondata->content;
+        Log3 $hash, 2, "SST ($device): get $modus - cloud did not answer with JSON string:\n" . $jsondata->content;
         $hash->{STATE} = 'cloud return data error';
         return "Samsung SmartThings cloud did not return valid JSON data string.\nPlease check log file for detailed information if this error repeats.";
     }
@@ -618,15 +619,15 @@ sub SST_getDeviceStatus($$) {
     my $brief_readings = AttrNum($device, 'brief_readings', 1);
 
     # parse JSON struct
-    Log3 $hash, 5, "SST ($device): get status - received JSON data";
+    Log3 $hash, 5, "SST ($device): get $modus - received JSON data";
     foreach my $baselevel ( keys %{ $jsonhash } ){
         unless( $baselevel eq 'components' ){
-            Log3 $hash, 4, "SST ($device): get status - unexpected branch: $baselevel";
+            Log3 $hash, 4, "SST ($device): get $modus - unexpected branch: $baselevel";
             next;
         }
         foreach my $component ( keys %{ $jsonhash->{$baselevel} } ){
             foreach my $capability ( keys %{ $jsonhash->{$baselevel}->{$component} } ){
-                Log3 $hash, 5, "SST ($device): get status - parsing component: $component";
+                Log3 $hash, 5, "SST ($device): get $modus - parsing component: $component";
 
                 if( $capability eq 'execute' ){
                     # we currently don't want readings for commands
@@ -643,7 +644,7 @@ sub SST_getDeviceStatus($$) {
 
                 if( ref $jsonhash->{$baselevel}->{$component}->{$capability} eq 'HASH' ){
                     foreach my $module ( keys %{ $jsonhash->{$baselevel}->{$component}->{$capability} } ){
-                        Log3 $hash, 5, "SST ($device): get status - parsing module: $module";
+                        Log3 $hash, 5, "SST ($device): get $modus - parsing module: $module";
                         if( ref $jsonhash->{$baselevel}->{$component}->{$capability}->{$module} eq 'HASH' ){
                             if( defined $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} ){
                                 if( $component eq 'main' and $capability eq 'ocf' ){
@@ -693,22 +694,22 @@ sub SST_getDeviceStatus($$) {
                             foreach my $attribute ( keys %{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module} } ){
                                 next if $attribute eq 'timestamp'; # who cares about timestamps ...
                                 next unless defined $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute}; # ... or empty elements
-                                Log3 $hash, 3, "SST ($device): get status - unexpected hash reading at attribute level: $baselevel/$component/$capability/$module/$attribute of type " . ref( $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute} );
+                                Log3 $hash, 3, "SST ($device): get $modus - unexpected hash reading at attribute level: $baselevel/$component/$capability/$module/$attribute of type " . ref( $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute} );
                                 # TODO: propably extend interpretation if someone gets even more info
                             } # foreach attribute
                         }else{
-                            Log3 $hash, 3, "SST ($device): get status - unexpected non-hash reading at module level: $baselevel/$component/$capability/$module of type  " . ref( $jsonhash->{$baselevel}->{$component}->{$capability}->{$module} );
+                            Log3 $hash, 3, "SST ($device): get $modus - unexpected non-hash reading at module level: $baselevel/$component/$capability/$module of type  " . ref( $jsonhash->{$baselevel}->{$component}->{$capability}->{$module} );
                         }
                     } # foreach module
                 }else{
-                    Log3 $hash, 3, "SST ($device): get status - unexpected non-hash reading at capability level: $baselevel/$component/$capability of type " . ref( $jsonhash->{$baselevel}->{$component}->{$capability} );
+                    Log3 $hash, 3, "SST ($device): get $modus - unexpected non-hash reading at capability level: $baselevel/$component/$capability of type " . ref( $jsonhash->{$baselevel}->{$component}->{$capability} );
                 }
             } # foreach capability
         } # foreach component
     } # foreach baselevel
-    Log3 $hash, 5, "SST ($device): status query - identified disabled components:\n" . Dumper( @disabled );
-    Log3 $hash, 5, "SST ($device): status query - identified readings:\n" . Dumper( %readings );
-    Log3 $hash, 5, "SST ($device): status query - identified setList options:\n" . Dumper( @setListHints );
+    Log3 $hash, 5, "SST ($device): $modus query - identified disabled components:\n" . Dumper( @disabled );
+    Log3 $hash, 5, "SST ($device): $modus query - identified readings:\n" . Dumper( %readings );
+    Log3 $hash, 5, "SST ($device): $modus query - identified setList options:\n" . Dumper( @setListHints );
 
     # create/update all readings
     if( $modus eq 'status' ){
@@ -782,7 +783,7 @@ sub SST_getDeviceStatus($$) {
         }
         if( $updated ){
             $attr{$device}{setList} = join ' ', @setList_new;
-            Log3 $hash, 4, "SST ($device): get status - extended setList by $updated entries";
+            Log3 $hash, 4, "SST ($device): get $modus - extended setList by $updated entries";
         }
     }
 
