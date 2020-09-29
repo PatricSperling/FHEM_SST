@@ -1,6 +1,6 @@
 ################################################################################
 # 48_SST.pm
-#   Version 0.7.15 (2020-09-28)
+#   Version 0.7.16 (2020-09-29)
 #
 # SYNOPSIS
 #   Samsung SmartThings Connecton Module for FHEM
@@ -323,8 +323,6 @@ sub SST_Set($@) {
     # read arguments
     my $device      = shift @aArguments;
     my $reading     = shift @aArguments;
-    #my $mode        = shift @aArguments;
-    #my $value       = join(' ', @aArguments);
     my $device_type = AttrVal( $device, 'device_type', 'CONNECTOR' );
     my $connector   = AttrVal( $device, 'IODev', undef );
     my $msg         = undef;
@@ -360,14 +358,23 @@ sub SST_Set($@) {
         $command = shift @aArguments;
     }elsif( $capability eq 'thermostatCoolingSetpoint' ){
         $command = 'setCoolingSetpoint';
+    }elsif( $module =~ m/^set/ ){
+		$command = $module;
+	}else{
+        $command = 'set' . ucfirst($module);
+	}
+    # this might be a wild guess, but if it's a number, use a number
+    for( my $i = 0 ; $i <= $#aArguments ; $i++ ){
+        $aArguments[$i] = int $aArguments[$i] if $aArguments[$i] =~ m/^[0-9]+/;
     }
 
-    #$data = { 'commands' =>  [ { 'component' => 'cooler', 'capability' => 'refrigerationSetpoint', 'command' => 'setRefrigerationSetpoint', 'arguments' => [ 4 ] } ] };
+    # differ for empty arguments
     if( $#aArguments == -1 ){
-        $data = { 'commands' =>  [ { 'component' => $component, 'capability' => $capability, 'command' => $command, 'arguments' => [ ] } ] };
+    $data = { 'commands' =>  [ { 'component' => $component, 'capability' => $capability, 'command' => $command, 'arguments' => [ ] } ] };
     }else{
-        $data = { 'commands' =>  [ { 'component' => $component, 'capability' => $capability, 'command' => $command, 'arguments' => [ @aArguments ] } ] };
+    $data = { 'commands' =>  [ { 'component' => $component, 'capability' => $capability, 'command' => $command, 'arguments' => [ @aArguments ] } ] };
     }
+
     my $jsoncmd = encode_utf8(encode_json($data));
     Log3 $hash, 5, "SST ($device): JSON STRUCT (device set $capability):\n" . $jsoncmd;
 
@@ -379,12 +386,9 @@ sub SST_Set($@) {
     );
     my $webagent = LWP::UserAgent->new( timeout => AttrNum($device, 'set_timeout', 15) );
     my $jsondata = $webagent->request($webpost);
-    Log3 $hash, 5, "SST ($device): JSON STRUCT (device set $capability reply):\n$jsondata->content";
+    Log3 $hash, 5, "SST ($device): JSON STRUCT (device set $capability reply):\n" . $jsondata->content;
 
-    #unless( $jsondata->content){
-        #Log3 $hash, 2, "SST ($device): setting $capa / $cmd / " . join(',', $cmdargs) . " failed (empty JSON string)";
-        #return "Could not set $capability for Samsung SmartThings Device $device.";
-    #}
+    # non-expected server reply
     if( not $jsondata->content ){
         Log3 $hash, 2, "SST ($device): setting $component/$capability/$command - sending failed";
         $hash->{STATE} = 'cloud connection error';
@@ -417,8 +421,8 @@ sub SST_Set($@) {
 	}elsif( defined $jsonhash->{results} ){
         if( $jsonhash->{results}->[0]->{status} eq 'ACCEPTED' ){
 		    Log3 $hash, 4, "SST ($device): setting $component/$capability/$command was successfuly accepted";
-            #$msg = 'Variable set.';
-            $msg = undef;
+            $msg = 'Variable set.';
+            #$msg = undef;
         }else{
 		    Log3 $hash, 3, "SST ($device): setting $component/$capability/$command did not fail with response:\n" . $jsondata->content;
 		    $msg = "Command has results:\n$jsoncmd\n" . $jsondata->content;
@@ -752,7 +756,8 @@ sub SST_getDeviceStatus($$) {
             }elsif( $key =~ m/_switch$/ ){
                 $setList .= " $reading:on,off"; 
             }elsif( $key =~ m/^main_refrigeration_rapid/ ){
-                $setList .= " $reading:On,Off"; 
+                $setList .= " $reading:on,off"; 
+                #$setList .= " $reading:On,Off"; 
             }elsif( $key =~ m/Setpoint$/ ){
                 $setList .= " $reading"; 
             }
