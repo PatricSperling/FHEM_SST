@@ -43,7 +43,6 @@ $Data::Dumper::Sortkeys = 1;
 # INITIALIZATION
 sub SST_Initialize($) {
     my ($hash) = @_;
-
     $hash->{DefFn}       = 'SST_Define';
     $hash->{UndefFn}     = 'SST_Undefine';
     $hash->{SetFn}       = 'SST_Set';
@@ -54,23 +53,22 @@ sub SST_Initialize($) {
     #$hash->{parseParams} = 1;
 
     # ENTRYPOINT new device types (2/4)
-    my @attrList = qw(
-    autocreate:0,1,2
-    autoextend_setList:1,0
-    brief_readings:1,0
-    device_id
-    device_name
-    device_type:CONNECTOR,refrigerator,freezer,TV,washer,dryer,vacuumCleaner,room_a_c
-    disable:1,0
-    discard_units:0,1
-    get_timeout
-    interval
-    IODev
-    setList
-    set_timeout
+    my @attrList = (
+        'autocreate:0,1,2',
+        'autoextend_setList:1,0',
+        'brief_readings:1,0',
+        'device_id',
+        'device_name',
+        'device_type:CONNECTOR,refrigerator,freezer,TV,washer,dryer,vacuumCleaner,room_a_c',
+        'disable:1,0',
+        'discard_units:0,1',
+        'get_timeout',
+        'interval',
+        'IODev',
+        'setList',
+        'set_timeout'
     );
     $hash->{AttrList} = join(" ", @attrList)." ".$readingFnAttributes;
-
 }
 
 #####################################
@@ -344,7 +342,7 @@ sub SST_Set($@) {
     return "Could not identify Samsung SmartThings token for $device - please check configuration." unless $token;
 
     # exit if reading is unknown
-	return "Could not identify internal name for value $reading!" unless defined $hash->{'.R2CCC'}->{$reading};
+    return "Could not identify internal name for value $reading!" unless defined $hash->{'.R2CCC'}->{$reading};
 
     # exit if reading not defined in setList
     # TODO
@@ -359,10 +357,10 @@ sub SST_Set($@) {
     }elsif( $capability eq 'thermostatCoolingSetpoint' ){
         $command = 'setCoolingSetpoint';
     }elsif( $module =~ m/^set/ ){
-		$command = $module;
-	}else{
+        $command = $module;
+    }else{
         $command = 'set' . ucfirst($module);
-	}
+    }
     # this might be a wild guess, but if it's a number, use a number
     for( my $i = 0 ; $i <= $#aArguments ; $i++ ){
         $aArguments[$i] = int $aArguments[$i] if $aArguments[$i] =~ m/^[0-9]+/;
@@ -399,7 +397,7 @@ sub SST_Set($@) {
         readingsSingleUpdate($hash, 'set_timeouts_row', AttrNum($device, 'set_timeouts_row', 0) + 1, 1);
         $hash->{STATE} = 'cloud timeout';
 
-	    # update readings - it could have been successful
+        # update readings - it could have been successful
         SST_getDeviceStatus($hash->{NAME}, 'status');
         return "Updating $capability may have failed due to timeout." if AttrNum($device, 'verbose', 3) >= 4;
     }elsif( $jsondata->content !~ m/^\{"/ ){
@@ -411,29 +409,29 @@ sub SST_Set($@) {
     # reset timeout counter if neccessarry
     readingsSingleUpdate($hash, 'set_timeouts_row', 0, 1) if ReadingsNum($device, 'set_timeouts_row', 0);
 
-	# on error
+    # on error
     my $jsonhash = decode_json($jsondata->content);
-	if( defined $jsonhash->{error} ){
-		Log3 $hash, 2, "SST ($device): setting $component/$capability/$command failed: full JSON command and reply:\n$jsoncmd\n" . $jsondata->content;
-		$msg = "Command has results:\n$jsoncmd\n" . $jsondata->content;
+    if( defined $jsonhash->{error} ){
+        Log3 $hash, 2, "SST ($device): setting $component/$capability/$command failed: full JSON command and reply:\n$jsoncmd\n" . $jsondata->content;
+        $msg = "Command has results:\n$jsoncmd\n" . $jsondata->content;
         $msg =~ s/,/,\n/g;
-		return "Command failed:\n" . $jsonhash->{error}->{code} . ": " . $jsonhash->{error}->{message} . "\n$msg";
-	}elsif( defined $jsonhash->{results} ){
+        return "Command failed:\n" . $jsonhash->{error}->{code} . ": " . $jsonhash->{error}->{message} . "\n$msg";
+    }elsif( defined $jsonhash->{results} ){
         if( $jsonhash->{results}->[0]->{status} eq 'ACCEPTED' ){
-		    Log3 $hash, 4, "SST ($device): setting $component/$capability/$command was successfuly accepted";
+            Log3 $hash, 4, "SST ($device): setting $component/$capability/$command was successfuly accepted";
             $msg = 'Variable set.';
             #$msg = undef;
         }else{
-		    Log3 $hash, 3, "SST ($device): setting $component/$capability/$command did not fail with response:\n" . $jsondata->content;
-		    $msg = "Command has results:\n$jsoncmd\n" . $jsondata->content;
+            Log3 $hash, 3, "SST ($device): setting $component/$capability/$command did not fail with response:\n" . $jsondata->content;
+            $msg = "Command has results:\n$jsoncmd\n" . $jsondata->content;
         }
     }else{
-	    Log3 $hash, 3, "SST ($device): setting $component/$capability/$command did neither fail nor was successful with response:\n" . $jsondata->content;
-		$msg = "Command unambigious:\n$jsoncmd\n" . $jsondata->content;
+        Log3 $hash, 3, "SST ($device): setting $component/$capability/$command did neither fail nor was successful with response:\n" . $jsondata->content;
+        $msg = "Command unambigious:\n$jsoncmd\n" . $jsondata->content;
     }
 
     return $msg;
-	# update readings
+    # update readings
     SST_getDeviceStatus($hash->{NAME}, 'status');
     return undef;
 }
@@ -663,7 +661,7 @@ sub SST_getDeviceStatus($$) {
                                     # this might always indicate value options... let's assume that for the time being
                                     push @setListHints, $component . '_' . $capability . ':' . join( ',', @{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} } );
                                     $ccc2cmd{$reading} = join( ',', @{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} } );
-				                    next;
+                                    next;
                                 }
 
                                 if( ref $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} eq 'HASH' ){
@@ -762,13 +760,13 @@ sub SST_getDeviceStatus($$) {
                 $setList .= " $reading"; 
             }
         }
-	    $hash->{'.R2CCC'} = { %rdn2ccc };
+        $hash->{'.R2CCC'} = { %rdn2ccc };
         if( $modus eq 'x_options' ){
             $setList =~ s/^ //;
             $attr{$device}{setList} = $setList;
         }
         #return undef;
-	    return "r2ccc:\n" . Dumper( $hash->{'.R2CCC'} );
+        return "r2ccc:\n" . Dumper( $hash->{'.R2CCC'} );
     }
 
     # update setList if desired
