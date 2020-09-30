@@ -181,7 +181,7 @@ sub SST_Define($$) {
         }
     }
 
-    Log3 $aArguments[0], 3, "SST ($aArguments[0]): SST $attr{$aArguments[0]}{device_type} defined as $aArguments[0]";
+    Log3 $aArguments[0], 3, "SST ($aArguments[0]): define - $attr{$aArguments[0]}{device_type} defined as $aArguments[0]";
 
     # start timer for auto-rescan unless we're in config mode
     SST_ProcessTimer($hash) if $init_done;
@@ -244,7 +244,7 @@ sub SST_Notify($$) {
                             my $physid = AttrVal( $physnm, 'device_id', 'unknown' );
                             fhem( "defmod $physnm SST $physdt $physid IO=$newname" );
                         }else{
-                            Log3 $hash, 2, "SST ($device): could not identify FHEM device name for reading $reading";
+                            Log3 $hash, 2, "SST ($device): notify - could not identify FHEM device name for reading $reading";
                             $msg .= "\nCould not identify FHEM device name for reading $reading!";
                         }
                     }
@@ -279,7 +279,7 @@ sub SST_Undefine($$) {
         my $connector = AttrVal($device, 'IODev', undef);
         my $device_id = AttrVal($device, 'device_id', undef);
         fhem( "setReading $connector device_$device_id deleted" );
-        Log3 $hash, 3, "SST ($device): reset reading in connector $connector";
+        Log3 $hash, 3, "SST ($device): delete - reset reading in connector $connector";
     }
     return undef;
 }
@@ -320,7 +320,7 @@ sub SST_ProcessTimer($) {
         }else{
             SST_getDeviceStatus($device, 'status');
         }
-        Log3 $hash, 4, "SST ($device): reschedule for epoch " . ( gettimeofday() + $interval );
+        #Log3 $hash, 4, "SST ($device): reschedule for epoch " . ( gettimeofday() + $interval );
         InternalTimer( gettimeofday() + $interval, 'SST_ProcessTimer', $hash );
     }
     return undef;
@@ -363,7 +363,7 @@ sub SST_Set($@) {
 
     # split up communication path
     my ($component, $capability, $module) = split( '_', $hash->{'.R2CCC'}->{$reading} );
-    Log3 $hash, 4, "SST ($device): set $component/$capability/$module/" . join( ',', @aArguments );
+    Log3 $hash, 4, "SST ($device): set $component/$capability - $module/" . join( ',', @aArguments );
 
     # try to auto-identify command name
     if( $module eq 'switch' ){
@@ -402,11 +402,11 @@ sub SST_Set($@) {
 
     # non-expected server reply
     if( not $jsondata->content ){
-        Log3 $hash, 2, "SST ($device): setting $component/$capability/$command - sending failed";
+        Log3 $hash, 2, "SST ($device): set $component/$capability - sending failed";
         $hash->{STATE} = 'cloud connection error';
         return "Could not set $capability for Samsung SmartThings devices.\nPlease check your configuration.";
     }elsif( $jsondata->content =~ m/^read timeout/ ){
-        Log3 $hash, 3, "SST ($device): setting $component/$capability/$command - probably failed: cloud query timed out";
+        Log3 $hash, 3, "SST ($device): set $component/$capability - probably failed: cloud query timed out";
         readingsSingleUpdate($hash, 'set_timeouts', AttrNum($device, 'set_timeouts', 0) + 1, 1);
         readingsSingleUpdate($hash, 'set_timeouts_row', AttrNum($device, 'set_timeouts_row', 0) + 1, 1);
         $hash->{STATE} = 'cloud timeout';
@@ -415,7 +415,7 @@ sub SST_Set($@) {
         SST_getDeviceStatus($hash->{NAME}, 'status');
         return "Updating $capability may have failed due to timeout." if AttrNum($device, 'verbose', 3) >= 4;
     }elsif( $jsondata->content !~ m/^\{"/ ){
-        Log3 $hash, 2, "SST ($device): setting $component/$capability/$command - failed: cloud did not answer with JSON string:\n" . $jsondata->content;
+        Log3 $hash, 2, "SST ($device): set $component/$capability - failed: cloud did not answer with JSON string:\n" . $jsondata->content;
         $hash->{STATE} = 'cloud return data error';
         return "Samsung SmartThings did not return valid JSON data string.\nPlease check log file for detailed information if this error persists.";
     }
@@ -426,21 +426,21 @@ sub SST_Set($@) {
     # on error
     my $jsonhash = decode_json($jsondata->content);
     if( defined $jsonhash->{error} ){
-        Log3 $hash, 2, "SST ($device): setting $component/$capability/$command failed: full JSON command and reply:\n$jsoncmd\n" . $jsondata->content;
+        Log3 $hash, 2, "SST ($device): set $component/$capability - failed: full JSON command and reply:\n$jsoncmd\n" . $jsondata->content;
         $msg = "Command has results:\n$jsoncmd\n" . $jsondata->content;
         $msg =~ s/,/,\n/g;
         return "Command failed:\n" . $jsonhash->{error}->{code} . ": " . $jsonhash->{error}->{message} . "\n$msg";
     }elsif( defined $jsonhash->{results} ){
         if( $jsonhash->{results}->[0]->{status} eq 'ACCEPTED' ){
-            Log3 $hash, 4, "SST ($device): setting $component/$capability/$command was successfuly accepted";
+            Log3 $hash, 4, "SST ($device): set $component/$capability - successfuly accepted";
             $msg = 'Variable set.';
             #$msg = undef;
         }else{
-            Log3 $hash, 3, "SST ($device): setting $component/$capability/$command did not fail with response:\n" . $jsondata->content;
+            Log3 $hash, 3, "SST ($device): set $component/$capability - did not fail with response:\n" . $jsondata->content;
             $msg = "Command has results:\n$jsoncmd\n" . $jsondata->content;
         }
     }else{
-        Log3 $hash, 3, "SST ($device): setting $component/$capability/$command did neither fail nor was successful with response:\n" . $jsondata->content;
+        Log3 $hash, 3, "SST ($device): set $component/$capability - did neither fail nor was successful with response:\n" . $jsondata->content;
         $msg = "Command unambigious:\n$jsoncmd\n" . $jsondata->content;
     }
 
@@ -624,10 +624,8 @@ sub SST_getDeviceStatus($$) {
     # reset timeout counter
     readingsSingleUpdate($hash, 'get_timeouts_row', 0, 1);
 
-    Log3 $hash, 5, "SST ($device): raw JSON data?: " . substr( $jsondata->content, 0, 40 ) . '...';
-    my $jsonhash = decode_json($jsondata->content);
-
     # TODO: possibly read in some manual disabled capabilities from attribute or reading
+    my $jsonhash       = decode_json($jsondata->content);
     my @setListHints   = ();
     my %ccc2cmd        = ();
     my @disabled       = ();
@@ -723,9 +721,9 @@ sub SST_getDeviceStatus($$) {
             } # foreach capability
         } # foreach component
     } # foreach baselevel
-    Log3 $hash, 5, "SST ($device): $modus query - identified disabled components:\n" . Dumper( @disabled );
-    Log3 $hash, 5, "SST ($device): $modus query - identified readings:\n" . Dumper( %readings );
-    Log3 $hash, 5, "SST ($device): $modus query - identified setList options:\n" . Dumper( @setListHints );
+    Log3 $hash, 5, "SST ($device): get $modus - identified disabled components:\n" . Dumper( @disabled );
+    Log3 $hash, 5, "SST ($device): get $modus - identified readings:\n" . Dumper( %readings );
+    Log3 $hash, 5, "SST ($device): get $modus - identified setList options:\n" . Dumper( @setListHints );
 
     # create/update all readings
     if( $modus eq 'status' ){
@@ -779,8 +777,7 @@ sub SST_getDeviceStatus($$) {
             $setList =~ s/^ //;
             $attr{$device}{setList} = $setList;
         }
-        #return undef;
-        return "r2ccc:\n" . Dumper( $hash->{'.R2CCC'} );
+        return undef;
     }
 
     # update setList if desired
