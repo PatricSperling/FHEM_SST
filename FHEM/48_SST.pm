@@ -265,8 +265,22 @@ sub SST_Notify($$) {
 # UNDEFINE/DELETE
 sub SST_Undefine($$) {
     my ($hash, $arg) = @_;
+    my $device = $hash->{NAME};
     RemoveInternalTimer($hash);
-    # TODO: possible removal of associated devices if this is the main device - needs to be discussed
+
+    if( AttrVal( $device, 'device_type', 'CONNECTOR' ) eq 'CONNECTOR' ){
+        # TODO: delete all associated devices
+        # remove client devices
+        # foreach reading
+        # delete client
+        # done
+    }else{
+        # reset reading in CONNECTOR
+        my $connector = AttrVal($device, 'IODev', undef);
+        my $device_id = AttrVal($device, 'device_id', undef);
+        fhem( "setReading $connector device_$device_id deleted" );
+        Log3 $hash, 3, "SST ($device): reset reading in connector $connector";
+    }
     return undef;
 }
 
