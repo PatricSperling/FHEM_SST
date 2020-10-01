@@ -313,15 +313,18 @@ sub SST_ProcessTimer($) {
     my $device = $hash->{NAME};
     my $interval = AttrNum( $device, 'interval', 0 );
     my $disabled = AttrNum( $device, 'disable',  0 );
+    my $nextrun  = gettimeofday() + $interval;
 
     if( $interval and not $disabled ){
+        RemoveInternalTimer($hash);
+        Log3 $hash, 5, "SST ($device): reschedule - running command first";
         if( AttrVal( $device, 'device_type', 'CONNECTOR' ) eq 'CONNECTOR' ){
             SST_getDeviceDetection($device);
         }else{
             SST_getDeviceStatus($device, 'status');
         }
-        #Log3 $hash, 4, "SST ($device): reschedule for epoch " . ( gettimeofday() + $interval );
-        InternalTimer( gettimeofday() + $interval, 'SST_ProcessTimer', $hash );
+        Log3 $hash, 4, "SST ($device): reschedule - next update in $interval seconds";
+        InternalTimer( $nextrun, 'SST_ProcessTimer', $hash );
     }
     return undef;
 }
