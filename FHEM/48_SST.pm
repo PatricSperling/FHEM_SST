@@ -57,6 +57,7 @@ sub SST_Initialize($) {
         'autocreate:0,1,2',
         'autoextend_setList:1,0',
         'brief_readings:1,0',
+        'confirmation_delay',
         'device_id',
         'device_name',
         'device_type:CONNECTOR,refrigerator,freezer,TV,washer,dryer,vacuumCleaner,room_a_c',
@@ -340,6 +341,7 @@ sub SST_Set($@) {
     my $reading     = shift @aArguments;
     my $device_type = AttrVal( $device, 'device_type', 'CONNECTOR' );
     my $connector   = AttrVal( $device, 'IODev', undef );
+    my $read_delay  = AttrNum( $device, 'confirmation_delay', 3 );
     my $msg         = undef;
     my $token       = undef;
     my $data        = undef;
@@ -428,7 +430,7 @@ sub SST_Set($@) {
         $hash->{STATE} = 'cloud timeout';
 
         # update readings - it could have been successful
-        SST_getDeviceStatus($hash->{NAME}, 'status');
+        InternalTimer( gettimeofday() + $read_delay, 'SST_ProcessTimer', $hash );
         return "Updating $capability may have failed due to timeout." if AttrNum($device, 'verbose', 3) >= 4;
     }elsif( $jsondata->content !~ m/^\{"/ ){
         Log3 $hash, 2, "SST ($device): set $component/$capability - failed: cloud did not answer with JSON string:\n" . $jsondata->content;
@@ -449,8 +451,7 @@ sub SST_Set($@) {
     }elsif( defined $jsonhash->{results} ){
         if( $jsonhash->{results}->[0]->{status} eq 'ACCEPTED' ){
             Log3 $hash, 4, "SST ($device): set $component/$capability - successfuly accepted";
-            $msg = 'Variable set.';
-            #$msg = undef;
+            $msg = undef;
         }else{
             Log3 $hash, 3, "SST ($device): set $component/$capability - did not fail with response:\n" . $jsondata->content;
             $msg = "Command has results:\n$jsoncmd\n" . $jsondata->content;
@@ -461,7 +462,7 @@ sub SST_Set($@) {
     }
 
     # update readings
-    SST_getDeviceStatus($hash->{NAME}, 'status');
+    InternalTimer( gettimeofday() + $read_delay, 'SST_ProcessTimer', $hash );
     return $msg;
 }
 
