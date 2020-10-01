@@ -370,24 +370,37 @@ sub SST_Set($@) {
 
     # try to auto-identify command name
     if( $module eq 'switch' ){
+        # easy for switches...
         $command = shift @aArguments;
     }elsif( $capability eq 'thermostatCoolingSetpoint' ){
+        # this does not follow the common rule
         $command = 'setCoolingSetpoint';
     }elsif( $module =~ m/^set/ ){
+        # seems legit
         $command = $module;
     }else{
+        # the common rule
         $command = 'set' . ucfirst($module);
     }
-    # this might be a wild guess, but if it's a number, use a number
-    for( my $i = 0 ; $i <= $#aArguments ; $i++ ){
-        $aArguments[$i] = int $aArguments[$i] if $aArguments[$i] =~ m/^[0-9]+/;
-    }
 
-    # differ for empty arguments
-    if( $#aArguments == -1 ){
-    $data = { 'commands' =>  [ { 'component' => $component, 'capability' => $capability, 'command' => $command, 'arguments' => [ ] } ] };
-    }else{
-    $data = { 'commands' =>  [ { 'component' => $component, 'capability' => $capability, 'command' => $command, 'arguments' => [ @aArguments ] } ] };
+    # prepare data struct
+    $data->{commands}->[0]->{component}  = $component;
+    $data->{commands}->[0]->{capability} = $capability;
+    $data->{commands}->[0]->{command}    = $command;
+    $data->{commands}->[0]->{arguments}  = ();
+
+    # handle/set command arguments
+    for( my $i = 0 ; $i <= $#aArguments ; $i++ ){
+        if( $aArguments[$i] =~ m/^[0-9]+$/ or $aArguments[$i] =~ m/^-\d+/ ){
+            # this might be a wild guess, but if it's a number, use a number
+            push @{ $data->{commands}->[0]->{arguments} }, int $aArguments[$i];
+        }elsif( $aArguments[$i] =~ m/^On$|^Off$/ ){
+            # and force lowercase On/Off command
+            push @{ $data->{commands}->[0]->{arguments} }, lc $aArguments[$i];
+        }else{
+            # keep anything else as received
+            push @{ $data->{commands}->[0]->{arguments} }, $aArguments[$i];
+        }
     }
 
     my $jsoncmd = encode_utf8(encode_json($data));
@@ -447,10 +460,9 @@ sub SST_Set($@) {
         $msg = "Command unambigious:\n$jsoncmd\n" . $jsondata->content;
     }
 
-    return $msg;
     # update readings
     SST_getDeviceStatus($hash->{NAME}, 'status');
-    return undef;
+    return $msg;
 }
 
 #####################################
