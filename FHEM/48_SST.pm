@@ -782,8 +782,7 @@ sub SST_getDeviceStatus($$) {
             }elsif( $key =~ m/_switch$/ ){
                 $setList .= " $reading:on,off"; 
             }elsif( $key =~ m/^main_refrigeration_rapid/ ){
-                $setList .= " $reading:on,off"; 
-                #$setList .= " $reading:On,Off"; 
+                $setList .= " $reading:On,Off"; # weirdly this is upper case on get, but lower case on set...
             }elsif( $key =~ m/Setpoint$/ ){
                 $setList .= " $reading"; 
             }
