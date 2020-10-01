@@ -198,6 +198,7 @@ sub SST_Attribute($$) {
     return undef unless $init_done;
     # TODO: auto change defaults when device_type changes
 
+    Log3 $hash, 4, "SST ($device): attribute change - $attribute to $parameter[0]";
     if( $attribute eq 'interval' ){
         if( $parameter[0] == 0 ){
             # stop polling
@@ -290,16 +291,17 @@ sub SST_Undefine($$) {
 sub SST_Get($@) {
     my ($hash, @aArguments) = @_;
     return '"get $hash->{name}" needs at least one argument' if int(@aArguments) < 2;
+    my $device  = shift @aArguments;
+    my $command = shift @aArguments;
+    Log3 $hash, 5, "SST ($device): get command - received $command";
 
     # differ on specific get command
-    my $name = shift @aArguments;
-    my $command  = shift @aArguments;
     if( $command eq 'device_list' ){
         return SST_getDeviceDetection($hash->{NAME} );
     }elsif( $command eq 'status' or $command eq 'x_options' ){
         return SST_getDeviceStatus( $hash->{NAME}, $command );
     }else{
-        if( AttrVal( $name, 'device_type', 'CONNECTOR' ) eq 'CONNECTOR' ){
+        if( AttrVal( $device, 'device_type', 'CONNECTOR' ) eq 'CONNECTOR' ){
             return "Unknown argument $command, choose one of device_list:noArg";
         }else{
             return "Unknown argument $command, choose one of status:noArg x_options:noArg";
@@ -908,8 +910,9 @@ sub SST_getDeviceStatus($$) {
     <a name="autoextend_setList"></a>
     <li>autoextend_setList {0|1}<br>
     Not valid for connector device. Defaults to <b>0</b> (off).<br>
-    If set to <b>1</b> all setting options identified during a status update that are
-    not yet defined in setList will be written into the setList attribute.<br>
+    If set to <b>1</b> all setting options identified during a status update
+    that are not yet defined in setList will be written into the setList
+    attribute.<br>
 
     <a name="brief_readings"></a>
     <li>brief_readings<br>
@@ -919,6 +922,12 @@ sub SST_getDeviceStatus($$) {
     If set to <b>0</b> these names will remain as received. Only this way
     unique names can be guaranteed. Use this if you think you miss some
     readings.<br>
+
+    <a name="confirmation_delay"></a>
+    <li>confirmation_delay<br>
+    Not valid for connector device. Defaults to <b>3</b>.<br>
+    Time in seconds to wait after setting values before checking the device
+    status.<br>
 
     <a name="device_id"></a>
     <li>device_id<br>
@@ -1132,6 +1141,12 @@ sub SST_getDeviceStatus($$) {
     Eine Deaktivierung dieses Attributs führt zu längeren, aber dafür 100%ig
     eindeutigen Readingnamen. Wenn erwartete Reading vermisst werden, sollte
     man diesen Wert ändern.<br>
+
+    <a name="confirmation_delay"></a>
+    <li>confirmation_delay<br>
+    Für den Connector irrelevant. Default ist <b>3</b>.<br>
+    Zeit in Sekunden, die nach dem Setzen eines Wertes gewartet wird, bevor der
+    Status abgefragt wird.<br>
 
     <a name="device_id"></a>
     <li>device_id<br>
