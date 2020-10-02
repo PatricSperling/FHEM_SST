@@ -1,6 +1,6 @@
 ################################################################################
 # 48_SST.pm
-#   Version 0.7.16 (2020-09-29)
+#   Version 0.7.17 (2020-10-02)
 #
 # SYNOPSIS
 #   Samsung SmartThings Connecton Module for FHEM
@@ -441,7 +441,7 @@ sub SST_Set($@) {
     }
 
     # reset timeout counter if neccessarry
-    readingsSingleUpdate($hash, 'set_timeouts_row', 0, 1) if ReadingsNum($device, 'set_timeouts_row', 0);
+    readingsSingleUpdate($hash, 'set_timeouts_row', 0, 1) if ReadingsNum($device, 'set_timeouts_row', 0) > 0;
 
     # on error
     my $jsonhash = decode_json($jsondata->content);
@@ -503,7 +503,7 @@ sub SST_getDeviceDetection($) {
     }
 
     # reset timeout counter
-    readingsSingleUpdate($hash, 'get_timeouts_row', 0, 1);
+    readingsSingleUpdate($hash, 'get_timeouts_row', 0, 1) if AttrNum($device, 'get_timeouts_row', 0) > 0;
 
     my $items    = decode_json($jsondata->content);
     my $count    = scalar @{ $items->{items}};
@@ -565,9 +565,11 @@ sub SST_getDeviceDetection($) {
                 # try to determine the device type
                 my $subdevicetype = 'unknown';
                 if( $items->{items}[$i]->{name} =~ m/^\[(.*)\]/ ){
-                    $subdevicetype = lc($1);
+                    $subdevicetype = $1;
                 }elsif( $items->{items}[$i]->{deviceTypeName} =~ m/ OCF (.*)$/ ){
-                    $subdevicetype = lc($1);
+                    $subdevicetype = $1;
+                }elsif( $items->{items}[$i]->{deviceTypeName} =~ m/TV/ ){
+                    $subdevicetype = 'TV';
                 }else{
                     $msg .= 'cannot determine device type from name (' . $items->{items}[$i]->{name} . ') or deviceTypeName (' . $items->{items}[$i]->{deviceTypeName} . ').';
                     Log3 $hash, 2, "SST ($device): get device_list - cannot determine device type from name (" . $items->{items}[$i]->{name} . ') or deviceTypeName (' . $items->{items}[$i]->{deviceTypeName} . ').';
@@ -617,6 +619,7 @@ sub SST_getDeviceStatus($$) {
     return "Could not identify Samsung SmartThings token for $device - please check configuration." unless $token;
 
     # poll cloud for all status objects (all components)
+    Log3 $hash, 4, "SST ($device): get $modus - query cloud service";
     my $webget   = HTTP::Request->new('GET', 
         'https://api.smartthings.com/v1/devices/' . AttrVal($device, 'device_id', undef) . '/status',
         ['Authorization' => "Bearer: $token"]
@@ -640,7 +643,7 @@ sub SST_getDeviceStatus($$) {
     }
 
     # reset timeout counter
-    readingsSingleUpdate($hash, 'get_timeouts_row', 0, 1);
+    readingsSingleUpdate($hash, 'get_timeouts_row', 0, 1) if AttrNum($device, 'get_timeouts_row', 0) > 0;
 
     # TODO: possibly read in some manual disabled capabilities from attribute or reading
     my $jsonhash       = decode_json($jsondata->content);
@@ -659,7 +662,7 @@ sub SST_getDeviceStatus($$) {
         }
         foreach my $component ( keys %{ $jsonhash->{$baselevel} } ){
             foreach my $capability ( keys %{ $jsonhash->{$baselevel}->{$component} } ){
-                Log3 $hash, 5, "SST ($device): get $modus - parsing component: $component";
+                #Log3 $hash, 5, "SST ($device): get $modus - parsing component: $component";
 
                 if( $capability eq 'execute' ){
                     # we currently don't want readings for commands
@@ -676,7 +679,7 @@ sub SST_getDeviceStatus($$) {
 
                 if( ref $jsonhash->{$baselevel}->{$component}->{$capability} eq 'HASH' ){
                     foreach my $module ( keys %{ $jsonhash->{$baselevel}->{$component}->{$capability} } ){
-                        Log3 $hash, 5, "SST ($device): get $modus - parsing module: $module";
+                        #Log3 $hash, 5, "SST ($device): get $modus - parsing module: $module";
                         if( ref $jsonhash->{$baselevel}->{$component}->{$capability}->{$module} eq 'HASH' ){
                             if( defined $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} ){
                                 if( $component eq 'main' and $capability eq 'ocf' ){
@@ -739,9 +742,9 @@ sub SST_getDeviceStatus($$) {
             } # foreach capability
         } # foreach component
     } # foreach baselevel
-    Log3 $hash, 5, "SST ($device): get $modus - identified disabled components:\n" . Dumper( @disabled );
-    Log3 $hash, 5, "SST ($device): get $modus - identified readings:\n" . Dumper( %readings );
-    Log3 $hash, 5, "SST ($device): get $modus - identified setList options:\n" . Dumper( @setListHints );
+    Log3 $hash, 5, "SST ($device): get $modus - identified disabled components:\n" . Dumper( [ @disabled ] );
+    Log3 $hash, 5, "SST ($device): get $modus - identified readings:\n" . Dumper( { %readings } );
+    Log3 $hash, 5, "SST ($device): get $modus - identified setList options:\n" . Dumper( [ @setListHints ] );
 
     # create/update all readings
     if( $modus eq 'status' ){
@@ -794,9 +797,11 @@ sub SST_getDeviceStatus($$) {
             $setList =~ s/^ //;
             $attr{$device}{setList} = $setList;
         }
+        Log3 $hash, 5, "SST ($device): get $modus - identified readings to c3 path mappings:\n" . Dumper( $hash->{'.R2CCC'} );
         return undef;
     }
 
+    # TODO: possible deletion candidate
     # update setList if desired
     if( AttrNum($device, 'autoextend_setList', 0) > 0 ){
         # TODO: update/compare complete entry (with enum)
