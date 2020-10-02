@@ -1,4 +1,14 @@
 FHEM module SST last 3 changes:
+2020-10-02: Version 0.7.17
+ - changed logging a bit
+ - added documentation for confirmation_delay
+ - fixed icase mismatch issue for On/Off values
+ - added confirmation delay when setting data
+ - fixed number setting issue
+ - fixed internal timer issue
+ - aligned log messages
+ - added write-back to CONNECTOR on device deletion
+ - got rid of a perl warning
 2020-09-29: Version 0.7.16
  - implemented pretty generic setting of values (time will tell)
  - fixed log messages
@@ -7,6 +17,3 @@ FHEM module SST last 3 changes:
  - simplified structure
  - added get command x_option to set setList and store name mapping as internal
  - replaced timeout counter with individual counters
-2020-09-26: Version 0.7.14
- - fixed time conversion / added HASH interpretation for "value" values
- - added documentation for some readings

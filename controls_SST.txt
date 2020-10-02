@@ -5,7 +5,8 @@ DEL ./images/fhemSVG/samsung_smartthings.svg
 DEL ./images/fhemSVG/Samsung_SmartThings.svg
 DEL ./images/fhemSVG/samsung.svg
 DEL ./images/fhemSVG/Samsung.svg
-UPD 2020-09-29_21:48:07 56167 ./FHEM/48_SST.pm
+UPD 2020-10-02_16:31:34 58360 ./FHEM/48_SST.pm
+UPD 2020-10-02_00:10:31 57275 ./FHEM/48_SST.pm.bak
 UPD 2020-08-25_22:50:25 4907 ./www/images/fhemSVG/samsung.svg
 UPD 2020-09-23_18:03:30 7948 ./www/images/fhemSVG/samsung_ac.svg
 UPD 2020-09-23_18:03:27 6883 ./www/images/fhemSVG/samsung_sidebyside.svg

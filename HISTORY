@@ -1,4 +1,14 @@
-2020-09-29 21:49:13 +0200 Version 0.7.16
+2020-10-02 16:32:14 +0200 Version 0.7.17
+2020-10-02 16:31:34 +0200 changed logging a bit
+2020-10-02 00:20:24 +0200 added documentation for confirmation_delay
+2020-10-02 00:11:14 +0200 fixed icase mismatch issue for On/Off values
+2020-10-02 00:08:58 +0200 added confirmation delay when setting data
+2020-10-02 00:06:19 +0200 fixed number setting issue
+2020-10-02 00:03:39 +0200 fixed internal timer issue
+2020-09-30 17:55:32 +0200 aligned log messages
+2020-09-30 17:37:10 +0200 added write-back to CONNECTOR on device deletion
+2020-09-30 17:27:36 +0200 got rid of a perl warning
+2020-09-29 21:49:34 +0200 Version 0.7.16
 2020-09-29 21:48:07 +0200 implemented pretty generic setting of values (time will tell)
 2020-09-29 18:53:39 +0200 fixed log messages
 2020-09-28 16:34:42 +0200 Version 0.7.15
