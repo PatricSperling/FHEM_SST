@@ -1,6 +1,6 @@
 ################################################################################
 # 48_SST.pm
-#   Version 0.7.17 (2020-10-02)
+#   Version 0.7.18 (2020-10-03)
 #
 # SYNOPSIS
 #   Samsung SmartThings Connecton Module for FHEM
@@ -159,23 +159,23 @@ sub SST_Define($$) {
             # ENTRYPOINT new device types (3/4)
             if( lc $attr{$aArguments[0]}{device_type} eq 'refrigerator' ){
                 $attr{$aArguments[0]}{icon}          = 'samsung_sidebyside';
-                $attr{$aArguments[0]}{setList}       = 'fridge_temperature rapidCooling:off,on rapidFreezing:off,on defrost:on,off waterFilterResetType:noArg';
+                #$attr{$aArguments[0]}{setList}       = 'fridge_temperature rapidCooling:off,on rapidFreezing:off,on defrost:on,off waterFilterResetType:noArg';
                 $attr{$aArguments[0]}{stateFormat}   = "cooler_temperature °C (cooler_contact)<br>\nfreezer_temperature °C (freezer_contact)";
-                $attr{$aArguments[0]}{discard_units} = 1;
+                #$attr{$aArguments[0]}{discard_units} = 1;
             }elsif( lc $attr{$aArguments[0]}{device_type} eq 'tv' ){
-                $attr{$aArguments[0]}{icon}        = 'it_television';
-                $attr{$aArguments[0]}{setList}     = 'power:off,on,inbetween';
+                $attr{$aArguments[0]}{icon}        = 'samsung_tv';
+                #$attr{$aArguments[0]}{setList}     = 'power:off,on,inbetween';
                 $attr{$aArguments[0]}{stateFormat} = 'switch<br>tvChannel';
             }elsif( lc $attr{$aArguments[0]}{device_type} eq 'washer' ){
                 $attr{$aArguments[0]}{icon}        = 'scene_washing_machine';
-                $attr{$aArguments[0]}{setList}     = 'washerMode:regular,heavy,rinse,spinDry state:pause,run,stop';
+                #$attr{$aArguments[0]}{setList}     = 'washerMode:regular,heavy,rinse,spinDry state:pause,run,stop';
                 $attr{$aArguments[0]}{stateFormat} = 'machineState<br>washerJobState';
             }elsif( lc $attr{$aArguments[0]}{device_type} eq 'room_a_c' ){
                 $attr{$aArguments[0]}{icon}        = 'samsung_ac';
                 $attr{$aArguments[0]}{stateFormat} = 'airConditionerMode';
             }elsif( lc $attr{$aArguments[0]}{device_type} eq 'vacuumCleaner' ){
                 $attr{$aArguments[0]}{icon}    = 'vacuum_top';
-                $attr{$aArguments[0]}{setList} = 'recharge:noArg turbo:on,off,silence mode:auto,part,repeat,manual,stop,map';
+                #$attr{$aArguments[0]}{setList} = 'recharge:noArg turbo:on,off,silence mode:auto,part,repeat,manual,stop,map';
             }else{
                 $attr{$aArguments[0]}{icon} = 'unknown';
             }
@@ -399,7 +399,9 @@ sub SST_Set($@) {
             # this might be a wild guess, but if it's a number, use a number
             push @{ $data->{commands}->[0]->{arguments} }, int $aArguments[$i];
             # temperatures don't like a unit when being set - skip it
-            $i++ if $aArguments[$i+1] =~ m/^[FC]$/i;
+            if( $i < $#aArguments ){
+                $i++ if $aArguments[$i+1] =~ m/^[FC]$/i;
+            }
         }elsif( $aArguments[$i] =~ m/^On$|^Off$/ ){
             # and force lowercase On/Off command
             push @{ $data->{commands}->[0]->{arguments} }, lc $aArguments[$i];
