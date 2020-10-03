@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   height="480"
+   width="480"
+   viewBox="0 0 88.900001 88.899995"
+   version="1.1"
+   id="svg2013"
+   sodipodi:docname="samsung_smartthings_cloud.svg"
+   inkscape:version="1.0 (4035a4fb49, 2020-05-01)">
+  <title
+     id="title865">Samsung SmartThings Cloud</title>
+  <defs
+     id="defs2007">
+    <linearGradient
+       id="linearGradient2649"
+       osb:paint="solid">
+      <stop
+         style="stop-color:#ff0000;stop-opacity:1;"
+         offset="0"
+         id="stop2647" />
+    </linearGradient>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.7"
+     inkscape:cx="336.24444"
+     inkscape:cy="267.85133"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     inkscape:document-rotation="0"
+     showgrid="false"
+     scale-x="0.7"
+     units="px"
+     inkscape:window-width="1920"
+     inkscape:window-height="1177"
+     inkscape:window-x="1912"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata2010">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Samsung SmartThings Cloud</dc:title>
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by/4.0/" />
+        <dc:date>2020-10-03</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Patric Sperling</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:description>Icon for display in FHEM</dc:description>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by/4.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       transform="translate(0,-3.0427085)"
+       id="g863">
+      <path
+         style="fill:none;stroke:#000000;stroke-width:2.45;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="m 66.80729,40.348958 c 2.337153,-0.849784 4.674305,-0.0935 7.011458,0 19.988122,6.248259 15.519811,28.707291 -0.264582,31.882291 H 16.801041 C -4.3064096,67.631663 -0.09151382,43.917432 13.096875,39.026042 11.700302,27.094796 24.759556,22.725298 31.485416,28.045832 c 2.191633,1.910289 4.837876,4.422846 4.630208,9.525"
+         id="path857"
+         sodipodi:nodetypes="ccccccc" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:2.45;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 31.485416,28.045833 C 49.844481,3.2495674 75.683505,26.33473 73.818749,40.348959"
+         id="path859"
+         sodipodi:nodetypes="cc" />
+    </g>
+    <g
+       transform="matrix(0.32310821,0,0,0.32310821,30.994664,32.624826)"
+       id="g1603">
+      <circle
+         style="fill:none;stroke:#000000;stroke-width:5.25;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none"
+         id="path1490"
+         cx="44.152927"
+         cy="14.312284"
+         r="10.668936" />
+      <circle
+         r="10.668936"
+         cy="36.108112"
+         cx="75.022552"
+         id="path1490-7"
+         style="fill:none;stroke:#000000;stroke-width:5.25001;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+      <circle
+         style="fill:none;stroke:#000000;stroke-width:5.25001;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none"
+         id="path1490-7-4"
+         cx="64.639137"
+         cy="72.216225"
+         r="10.668936" />
+      <circle
+         r="10.668936"
+         cy="73.058121"
+         cx="24.040892"
+         id="path1490-7-4-8"
+         style="fill:none;stroke:#000000;stroke-width:5.25001;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+      <circle
+         style="fill:none;stroke:#000000;stroke-width:5.25001;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none"
+         id="path1490-7-4-8-4"
+         cx="14.405827"
+         cy="36.482292"
+         r="10.668936" />
+      <circle
+         r="10.668936"
+         cy="46.772163"
+         cx="44.340015"
+         id="path1490-7-4-8-4-2"
+         style="fill:none;stroke:#000000;stroke-width:5.25001;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:4.9;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 44.086304,24.760161 43.826794,36.6305"
+         id="path1578" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:4.9;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="m 50.946457,54.766272 7.819076,9.921347"
+         id="path1582" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:4.9;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="m 38.28141,54.755909 -8.11302,9.942069"
+         id="path1584" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:4.9;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 35.02855,43.452697 23.559848,39.669706"
+         id="path1586" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:4.9;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 65.964071,40.020805 55.47179,43.498115"
+         id="path1590" />
+    </g>
+  </g>
+</svg>
