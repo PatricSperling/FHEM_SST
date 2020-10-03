@@ -2,4 +2,5 @@
 .fhem_control_deletion_list
 *.precommit
 *.backup-*
+*.bak
 data/

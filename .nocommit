@@ -1,6 +1,7 @@
 \.git
 \.gitpass
 .*\.backup-.*
+.*\.bak
 .*\.precommit
 \.fhem_control_deletion_list
 data/
