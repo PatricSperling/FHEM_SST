@@ -11,7 +11,7 @@ UPD 2020-10-03_17:32:14 4744 ./www/images/fhemSVG/samsung_tv.svg
 UPD 2020-10-03_17:29:28 8989 ./www/images/fhemSVG/samsung_ac.svg
 UPD 2020-10-03_18:09:07 6318 ./www/images/fhemSVG/samsung_smartthings_house.svg
 UPD 2020-10-03_18:44:00 6816 ./www/images/fhemSVG/samsung_smartthings_cloud.svg
-UPD 2020-10-03_17:31:06 4051 ./www/images/fhemSVG/samsung_tv_curved.svg
 UPD 2020-10-03_17:28:31 7959 ./www/images/fhemSVG/samsung_sidebyside.svg
 UPD 2020-10-03_17:42:35 5655 ./www/images/fhemSVG/samsung_smartthings.svg
 UPD 2020-10-03_18:11:01 6697 ./www/images/fhemSVG/samsung_smartthings_house2.svg
+UPD 2020-10-03_17:31:06 4051 ./www/images/fhemSVG/samsung_tv_curved.svg
