@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   inkscape:version="1.0 (4035a4fb49, 2020-05-01)"
+   sodipodi:docname="samsung_tv_curved.svg"
+   id="svg2013"
+   version="1.1"
+   viewBox="0 0 88.900001 88.899995"
+   width="480"
+   height="480">
+  <title
+     id="title1452">Curved TV</title>
+  <defs
+     id="defs2007">
+    <linearGradient
+       osb:paint="solid"
+       id="linearGradient2649">
+      <stop
+         id="stop2647"
+         offset="0"
+         style="stop-color:#ff0000;stop-opacity:1;" />
+    </linearGradient>
+  </defs>
+  <sodipodi:namedview
+     inkscape:window-maximized="0"
+     inkscape:window-y="114"
+     inkscape:window-x="2207"
+     inkscape:window-height="967"
+     inkscape:window-width="1274"
+     units="px"
+     scale-x="0.7"
+     showgrid="false"
+     inkscape:document-rotation="0"
+     inkscape:current-layer="layer1"
+     inkscape:document-units="mm"
+     inkscape:cy="197.68414"
+     inkscape:cx="227.30857"
+     inkscape:zoom="1.4"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base" />
+  <metadata
+     id="metadata2010">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Curved TV</dc:title>
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by/4.0/" />
+        <dc:description>Icon for display in FHEM</dc:description>
+        <dc:date>2020-10-03</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Patric Sperling</dc:title>
+          </cc:Agent>
+        </dc:creator>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by/4.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1"
+     inkscape:groupmode="layer"
+     inkscape:label="Layer 1">
+    <g
+       id="g1633">
+      <path
+         sodipodi:nodetypes="ccccc"
+         id="path1568"
+         d="M 1.0583333,80.830207 V 2.6458332 C 25.399344,10.924601 52.088678,17.353174 87.973957,16.536458 V 70.114582 C 45.589894,70.88974 36.984612,72.790741 1.0583333,80.830207 Z"
+         style="fill:none;stroke:#000000;stroke-width:0.7;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cccc"
+         id="path1624"
+         d="m 69.08249,74.835467 4.396583,-3.554685 c 1.042205,-0.881044 1.91941,-0.689586 2.712785,0.04677 l 6.688421,6.267471"
+         style="fill:none;stroke:#000000;stroke-width:0.69999998;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" />
+      <path
+         sodipodi:nodetypes="cccc"
+         id="path1626"
+         d="m 8.138357,84.049583 4.95785,-5.098167 c 1.16071,-1.285238 1.742881,-0.719148 2.291836,-0.04677 l 4.536901,8.278673"
+         style="fill:none;stroke:#000000;stroke-width:0.69999998;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" />
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   inkscape:version="1.0 (4035a4fb49, 2020-05-01)"
+   sodipodi:docname="samsung_tv.svg"
+   id="svg2013"
+   version="1.1"
+   viewBox="0 0 88.900001 88.899995"
+   width="480"
+   height="480">
+  <title
+     id="title1446">Samsung TV</title>
+  <defs
+     id="defs2007">
+    <linearGradient
+       osb:paint="solid"
+       id="linearGradient2649">
+      <stop
+         id="stop2647"
+         offset="0"
+         style="stop-color:#ff0000;stop-opacity:1;" />
+    </linearGradient>
+  </defs>
+  <sodipodi:namedview
+     inkscape:window-maximized="0"
+     inkscape:window-y="88"
+     inkscape:window-x="2187"
+     inkscape:window-height="967"
+     inkscape:window-width="1274"
+     units="px"
+     scale-x="0.7"
+     showgrid="false"
+     inkscape:document-rotation="0"
+     inkscape:current-layer="layer1"
+     inkscape:document-units="mm"
+     inkscape:cy="181.30659"
+     inkscape:cx="136.74336"
+     inkscape:zoom="1.4"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base" />
+  <metadata
+     id="metadata2010">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Samsung TV</dc:title>
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by/4.0/" />
+        <dc:date>2020-10-03</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Patric Sperling</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:description>Icon for display in FHEM</dc:description>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by/4.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1"
+     inkscape:groupmode="layer"
+     inkscape:label="Layer 1">
+    <g
+       id="g943"
+       transform="translate(-0.37041666)">
+      <g
+         id="g911">
+        <rect
+           style="fill:none;stroke:#000000;stroke-width:0.7406;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           id="rect889"
+           width="85.873695"
+           height="48.643051"
+           x="1.8708867"
+           y="19.45722" />
+        <rect
+           style="fill:none;stroke:#000000;stroke-width:0.7406;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           id="rect891"
+           width="2.4321525"
+           height="0.280633"
+           x="43.685204"
+           y="68.474449" />
+      </g>
+      <g
+         id="g907">
+        <path
+           style="fill:none;stroke:#000000;stroke-width:1.05;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           d="M 83.948467,74.07954 80.198451,68.271548"
+           id="path899" />
+        <path
+           style="fill:none;stroke:#000000;stroke-width:0.91;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           d="m 79.571379,68.392831 1.484554,4.021943"
+           id="path903" />
+      </g>
+      <g
+         transform="matrix(-1,0,0,1,89.670293,-0.00262893)"
+         id="g907-4">
+        <path
+           id="path899-4"
+           d="M 83.948467,74.07954 80.198451,68.271548"
+           style="fill:none;stroke:#000000;stroke-width:1.05;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+        <path
+           id="path903-4"
+           d="m 79.571379,68.392831 1.484554,4.021943"
+           style="fill:none;stroke:#000000;stroke-width:0.91;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+    </g>
+  </g>
+</svg>
