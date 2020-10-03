@@ -15,6 +15,3 @@ FHEM module SST last 3 changes:
  - aligned log messages
  - added write-back to CONNECTOR on device deletion
  - got rid of a perl warning
-2020-09-29: Version 0.7.16
- - implemented pretty generic setting of values (time will tell)
- - fixed log messages
