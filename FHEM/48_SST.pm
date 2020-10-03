@@ -398,6 +398,8 @@ sub SST_Set($@) {
         if( $aArguments[$i] =~ m/^[0-9]+$/ or $aArguments[$i] =~ m/^-\d+/ ){
             # this might be a wild guess, but if it's a number, use a number
             push @{ $data->{commands}->[0]->{arguments} }, int $aArguments[$i];
+            # temperatures don't like a unit when being set - skip it
+            $i++ if $aArguments[$i+1] =~ m/^[FC]$/i;
         }elsif( $aArguments[$i] =~ m/^On$|^Off$/ ){
             # and force lowercase On/Off command
             push @{ $data->{commands}->[0]->{arguments} }, lc $aArguments[$i];
