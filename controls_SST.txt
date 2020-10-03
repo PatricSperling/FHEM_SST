@@ -5,9 +5,13 @@ DEL ./images/fhemSVG/samsung_smartthings.svg
 DEL ./images/fhemSVG/Samsung_SmartThings.svg
 DEL ./images/fhemSVG/samsung.svg
 DEL ./images/fhemSVG/Samsung.svg
-UPD 2020-10-02_16:31:34 58360 ./FHEM/48_SST.pm
-UPD 2020-10-02_00:10:31 57275 ./FHEM/48_SST.pm.bak
-UPD 2020-08-25_22:50:25 4907 ./www/images/fhemSVG/samsung.svg
-UPD 2020-09-23_18:03:30 7948 ./www/images/fhemSVG/samsung_ac.svg
-UPD 2020-09-23_18:03:27 6883 ./www/images/fhemSVG/samsung_sidebyside.svg
-UPD 2020-09-12_23:58:57 1257 ./www/images/fhemSVG/samsung_smartthings.svg
+DEL ./www/images/fhemSVG/samsung.svg
+UPD 2020-10-03_19:19:37 58540 ./FHEM/48_SST.pm
+UPD 2020-10-03_17:32:14 4744 ./www/images/fhemSVG/samsung_tv.svg
+UPD 2020-10-03_17:29:28 8989 ./www/images/fhemSVG/samsung_ac.svg
+UPD 2020-10-03_18:09:07 6318 ./www/images/fhemSVG/samsung_smartthings_house.svg
+UPD 2020-10-03_18:44:00 6816 ./www/images/fhemSVG/samsung_smartthings_cloud.svg
+UPD 2020-10-03_17:31:06 4051 ./www/images/fhemSVG/samsung_tv_curved.svg
+UPD 2020-10-03_17:28:31 7959 ./www/images/fhemSVG/samsung_sidebyside.svg
+UPD 2020-10-03_17:42:35 5655 ./www/images/fhemSVG/samsung_smartthings.svg
+UPD 2020-10-03_18:11:01 6697 ./www/images/fhemSVG/samsung_smartthings_house2.svg

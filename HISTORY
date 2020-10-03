@@ -1,4 +1,10 @@
-2020-10-02 16:32:14 +0200 Version 0.7.17
+2020-10-03 19:21:14 +0200 Version 0.7.18
+2020-10-03 19:19:37 +0200 removed device dependent predefines for discard_units ans setList
+2020-10-03 18:46:36 +0200 added icon for SmartThings cloud
+2020-10-03 18:17:37 +0200 fixed icon properties
+2020-10-03 18:16:01 +0200 added new icons for SmartThings and TVs
+2020-10-03 16:29:35 +0200 removal of temperature unit on setting
+2020-10-02 16:32:39 +0200 Version 0.7.17
 2020-10-02 16:31:34 +0200 changed logging a bit
 2020-10-02 00:20:24 +0200 added documentation for confirmation_delay
 2020-10-02 00:11:14 +0200 fixed icase mismatch issue for On/Off values

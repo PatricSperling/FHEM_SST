@@ -1,4 +1,10 @@
 FHEM module SST last 3 changes:
+2020-10-03: Version 0.7.18
+ - removed device dependent predefines for discard_units ans setList
+ - added icon for SmartThings cloud
+ - fixed icon properties
+ - added new icons for SmartThings and TVs
+ - removal of temperature unit on setting
 2020-10-02: Version 0.7.17
  - changed logging a bit
  - added documentation for confirmation_delay
@@ -12,8 +18,3 @@ FHEM module SST last 3 changes:
 2020-09-29: Version 0.7.16
  - implemented pretty generic setting of values (time will tell)
  - fixed log messages
-2020-09-28: Version 0.7.15
- - partial device capability setting implementation
- - simplified structure
- - added get command x_option to set setList and store name mapping as internal
- - replaced timeout counter with individual counters
