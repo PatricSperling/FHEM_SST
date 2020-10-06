@@ -1146,7 +1146,7 @@ sub SST_getDeviceStatus($$) {
     Für den Connector irrelevant. Default ist <b>1</b> (an).<br>
     Ist dieser Wert an (<b>1</b>), werden die aus der Cloud bezogenen Namen
     der einzelnen Readings nach fixen Regeln gekürzt, was die Lesbarkeit der
-    Readingnamen deutlich verbessert.<b>
+    Readingnamen deutlich verbessert.<br>
     Eine Deaktivierung dieses Attributs führt zu längeren, aber dafür 100%ig
     eindeutigen Readingnamen. Wenn erwartete Reading vermisst werden, sollte
     man diesen Wert ändern.<br>
