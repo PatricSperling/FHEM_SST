@@ -864,9 +864,15 @@ sub SST_getDeviceStatus($$) {
     <br>
     You need to give the <i>SmartThings token</i> which must be generated on <a 
     href="https://account.smartthings.com/tokens" 
-    target='_blank'>https://account.smartthings.com/tokens</a>. The creation of
-    the real devices also requires the <i>device type</i> which is usually
-    identified and created as a reading by the device_list command.<br>
+    target='_blank'>https://account.smartthings.com/tokens</a> with at least
+    the following permission:<ul>
+    <li>Devices -> List all devices</li>
+    <li>Devices -> See all devices</li>
+    <li>Devices -> Control all devices</li>
+    <li>Device Profiles -> See all device profiles</li>
+    </ul>The creation of the real devices also requires the <i>device type</i>
+    which is usually identified and created as a reading by the device_list
+    command.<br>
     The connector needs to be given as the IODev, unless for the connector
     itself.<br>
   </ul><br>
@@ -900,6 +906,7 @@ sub SST_getDeviceStatus($$) {
     This is not available for the connector device and will overwrite the
     setList attribute with the corresponding information taken from the
     device's cloud response.<br>
+    In order to display the changes, the FHEMWEB page needs to be reloaded.<br>
 
   </ul><br>
 
@@ -1071,9 +1078,12 @@ sub SST_getDeviceStatus($$) {
     Zur Anlage des Connectors ist das <b>SmartThings token</b> nötig, welches
     zunächst unter <a href="https://account.smartthings.com/tokens" 
     target='_blank'>https://account.smartthings.com/tokens</a> erstellt werden
-    muß. Dieses Modul benötigt ein Token mit mindestens dem Zugriff auf Geräte
-    und Geräteprofile.<br>
-    <br>
+    muß. Dieses Modul benötigt ein Token mit mindestens folgenden Rechten:<ul>
+    <li>Devices -> List all devices</li>
+    <li>Devices -> See all devices</li>
+    <li>Devices -> Control all devices</li>
+    <li>Device Profiles -> See all device profiles</li>
+    </ul><br>
 
     <li><b>Phyische Geräte</b>:<br>
     <code>define &lt;name&gt; SST &lt;device type&gt; IODev=&lt;connector device&gt;</code><br>
@@ -1115,6 +1125,8 @@ sub SST_getDeviceStatus($$) {
     Diese Funktion steht beim Connector nicht zur Verfügung.<br>
     Hierüber wird eine Liste möglicher Kommandos aus dem Gerätestatus der
     Cloud erzeugt und in dem Attribut setList gespeichert.<br>
+    Um die Änderungen anzuzeigen, muß die Seite in FHEMWEB neu geladen
+    werden.<br>
 
   </ul><br>
 
