@@ -837,16 +837,18 @@ sub SST_getDeviceStatus($$) {
 # MANUAL
 # TODO: complete it ;)
 =pod
+=item device
 =item summary    Integration of Samsung SmartThings devices
-=item summary_DE Einbindung von Samsung SmartThings Geräten
+=item summary_DE Einbindung von Samsung SmartThings Ger&auml;ten
 =begin html
 
 <br>
 <a name="SST"></a>
+<a name="48_SST.pm"></a>
 <h3>SST - Samsung SmartThings Connector</h3>
 <ul>
   <b>Please Note that this Module is currently in an early beta status. Not
-  everything already works as described!<b><br>
+  everything already works as described!</b><br>
   SST is a generic integration of Samsung SmartThings and its devices. On one
   hand it can be used to identify all SmartThings devices from the cloud and
   create its pendents in FHEM. The more daring users may also create the FHEM
@@ -860,7 +862,8 @@ sub SST_getDeviceStatus($$) {
   <ul>
     <code>define &lt;name&gt; SST &lt;SmartThings token&gt;</code><br>
     or<br>
-    <code>define &lt;name&gt; SST &lt;device type&gt; IODev=&lt;connector device&gt;</code><br>
+    <code>define &lt;name&gt; SST &lt;device type&gt; IODev=&lt;connector
+    device&gt;</code><br>
     <br>
     You need to give the <i>SmartThings token</i> which must be generated on <a 
     href="https://account.smartthings.com/tokens" 
@@ -893,13 +896,13 @@ sub SST_getDeviceStatus($$) {
     detection. This refreshes the list of available SmartThings devices in the
     readings.<br>
     If <i>autocreate</i> (cf. below) is not set to 0, the FHEM devices will be
-    created.<br>
+    created.<br></li>
 
     <a name="status"></a>
     <li>status<br>
     This is not available for the connector device and will refresh the list
     of available/useful SmartThings capabilities in the readings. The readings
-    may differ greatly between different types of devices.<br>
+    may differ greatly between different types of devices.<br></li>
 
     <a name="x_options"></a>
     <li>x_options<br>
@@ -907,6 +910,7 @@ sub SST_getDeviceStatus($$) {
     setList attribute with the corresponding information taken from the
     device's cloud response.<br>
     In order to display the changes, the FHEMWEB page needs to be reloaded.<br>
+    </li>
 
   </ul><br>
 
@@ -916,19 +920,21 @@ sub SST_getDeviceStatus($$) {
     <a name="autocreate"></a>
     <li>autocreate {0|1|2}<br>
     Only valid for connector device. Defaults to <b>0</b> (off).<br>
-    If set to <b>0</b> no individual devices will be created on device detection.<br>
-    If set to <b>1</b> only uncreated devices will be created on device detection.<br>
-    If set to <b>2</b> all devices will be recreated (this may produce errors due to
-    previously undeleted devices) on device detection. After the
+    If set to <b>0</b> no individual devices will be created on device
+    detection.<br>
+    If set to <b>1</b> only uncreated devices will be created on device
+    detection.<br>
+    If set to <b>2</b> all devices will be recreated (this may produce errors
+    due to previously undeleted devices) on device detection. After the
     detection/creation the value for <b>autocreate</b> is automatically reset
-    to <b>1</b>.<br>
+    to <b>1</b>.<br></li>
 
     <a name="autoextend_setList"></a>
     <li>autoextend_setList {0|1}<br>
     Not valid for connector device. Defaults to <b>0</b> (off).<br>
     If set to <b>1</b> all setting options identified during a status update
     that are not yet defined in setList will be written into the setList
-    attribute.<br>
+    attribute.<br></li>
 
     <a name="brief_readings"></a>
     <li>brief_readings<br>
@@ -937,13 +943,13 @@ sub SST_getDeviceStatus($$) {
     far more readable reading names.<br>
     If set to <b>0</b> these names will remain as received. Only this way
     unique names can be guaranteed. Use this if you think you miss some
-    readings.<br>
+    readings.<br></li>
 
     <a name="confirmation_delay"></a>
     <li>confirmation_delay<br>
     Not valid for connector device. Defaults to <b>3</b>.<br>
     Time in seconds to wait after setting values before checking the device
-    status.<br>
+    status.<br></li>
 
     <a name="device_id"></a>
     <li>device_id<br>
@@ -951,30 +957,31 @@ sub SST_getDeviceStatus($$) {
     This is the 32 digits hexadecimal Samsung internal device ID token. To
     obtain it run the device detection and take it from the readings.<br>
     This attribute is automatically filled on device generation and usually
-    does not require your attention.<br>
+    does not require your attention.<br></li>
 
     <a name="device_name"></a>
     <li>device_name<br>
     Not valid for connector device.<br>
     This is the Samsung internal device name.<br>
     This attribute is automatically filled on device generation and usually
-    does not require your attention.<br>
+    does not require your attention.<br></li>
 
     <a name="device_type"></a>
-    <li>device_type {CONNECTOR|refrigerator|freezer|washer|dryer|TV|vacuumCleaner}<br>
+    <li>device_type
+    {CONNECTOR|refrigerator|freezer|washer|dryer|TV|vacuumCleaner}<br>
     Defaults to <b>CONNECTOR</b>.<br>
     This specifies the physical device type of this FHEM device.<br>
-    A 'special' device type is <b>CONNECTOR</b> which is the instance for device
-    detection and creation.<br>
+    A 'special' device type is <b>CONNECTOR</b> which is the instance for
+    device detection and creation.<br>
     Each different device type has a different set of capabilities that will
     result in the different readings and options for the setList.
     This attribute is automatically filled on device generation and usually
-    does not require your attention.<br>
+    does not require your attention.<br></li>
 
     <a name="disable"></a>
     <li>disable {0|1}<br>
     Defaults to 0 (off).<br>
-    A value of <b>1</b> disables auto-polling of device_list or status.
+    A value of <b>1</b> disables auto-polling of device_list or status.</li>
 
     <a name="discard_units"></a>
     <li>discard_units {0|1}<br>
@@ -982,20 +989,20 @@ sub SST_getDeviceStatus($$) {
     If set to <b>1</b> all readings (aka Samsung capabilities) will be stored
     without any units. This might be helpful as Samsung i.e. does not provide
     the degree symbol for temperatures, resulting in readings like <b>4 C</b>
-    instead of <b>4 °C</b>.<br>
+    instead of <b>4 °C</b>.<br></li>
 
     <a name="get_timeout"></a>
     <li>get_timeout<br>
     Defaults to 10 seconds.
     This is the timeout for cloud get requests in seconds. If your get_timeouts
     reading gets excessive, increase this value.<br>
-    Values too high might freeze FHEM on bad internet connections.<br>
+    Values too high might freeze FHEM on bad internet connections.<br></li>
 
     <a name="interval"></a>
     <li>interval<br>
     Defaults to <b>86400</b> (1 day) for the connector.<br>
     Defaults to <b>300</b> (5 minutes) for the physical devices.<br>
-    This is the reload interval in seconds.<br>
+    This is the reload interval in seconds.<br></li>
 
     <a name="IODev"></a>
     <li>IODev<br>
@@ -1004,7 +1011,7 @@ sub SST_getDeviceStatus($$) {
     devices from the connector device. It is also used for delting all pysical
     devices when deleting the connector device.<br>
     This attribute is automatically filled on device generation and usually
-    does not require your attention.<br>
+    does not require your attention.<br></li>
 
     <a name="setList"></a>
     <li>setList<br>
@@ -1013,14 +1020,14 @@ sub SST_getDeviceStatus($$) {
     is a default which is set on device creation based on the device type.<br>
     If you feel this list is not correct, please inform the module owner for
     change requests to the default.<br>
-    If autoextend_setList is set, this list may grow on status updates.<br>
+    If autoextend_setList is set, this list may grow on status updates.<br></li>
 
     <a name="set_timeout"></a>
     <li>set_timeout<br>
     Defaults to 15 seconds.
     This is the timeout for cloud set requests in seconds. If your set_timeouts
     reading gets excessive, increase this value.<br>
-    Values too high might freeze FHEM on bad internet connections.<br>
+    Values too high might freeze FHEM on bad internet connections.<br></li>
 
   </ul><br>
 
@@ -1031,23 +1038,23 @@ sub SST_getDeviceStatus($$) {
     <a name="devices"></a>
     <li>device_.*<br>
     These readings are created for the CONNECTOR for each client device
-    identified from the Samsung SmartThings cloud service.<br>
+    identified from the Samsung SmartThings cloud service.<br></li>
 
     <a name="lastrun"></a>
     <li>lastrun<br>
     This reading is set for the CONNECTOR each time it successfully retrieves
-    information from the Samsung SmartThings cloud service.<br>
+    information from the Samsung SmartThings cloud service.<br></li>
 
     <a name="timeount_counter"></a>
     <li>timeount_counter<br>
     This reading shows how often the retieval of information from the Samsung
-    SmartThings cloud service fails and when it did fail last.<br>
+    SmartThings cloud service fails and when it did fail last.<br></li>
 
     <a name="other"></a>
     <li>other readings<br>
     All other readings for physical devices represent one, as Samsung calls
     them, capability. These capabilities vary greatly from device type to
-    device type, so we cannot explain them here.<br>
+    device type, so we cannot explain them here.<br></li>
 
   </ul><br>
 
@@ -1059,14 +1066,16 @@ sub SST_getDeviceStatus($$) {
 
 <br>
 <a name="SST"></a>
+<a name="48_SST.pm"></a>
 <h3>SST - Samsung SmartThings Connector</h3>
 <ul>
-  Bitte beachten Sie, daß sich dieses Modul in einem frühen Beta-Stadium
-  befindet. Noch nicht alles funktioniert wie beschrieben!<br>
+  Bitte beachten Sie, da&szlig; sich dieses Modul in einem fr&uuml;hen
+  Beta-Stadium befindet. Noch nicht alles funktioniert wie beschrieben!<br>
   SST ist eine generische Modul zur Einbindung von Samsung SmartThings und den
-  dort eingebundenen Geräten. Hiermit können alle SmartThings Geräte aus der
-  Cloud eingelesen werden, und ihre FHEM Pendents angelegt werden. Die
-  erzeugten Geräte können dann in FHEM angezeigt und gesteuert werden.<br>
+  dort eingebundenen Ger&auml;ten. Hiermit k&ouml;nnen alle SmartThings
+  Ger&auml;te aus der Cloud eingelesen werden, und ihre FHEM Pendents angelegt
+  werden. Die erzeugten Ger&auml;te k&ouml;nnen dann in FHEM angezeigt und
+  gesteuert werden.<br>
   <br>
 
   <a name="SSTdefine"></a>
@@ -1075,24 +1084,27 @@ sub SST_getDeviceStatus($$) {
     <li><b>Connector</b>:<br>
     <code>define &lt;name&gt; SST &lt;SmartThings token&gt;</code><br>
     <br>
-    Zur Anlage des Connectors ist das <b>SmartThings token</b> nötig, welches
-    zunächst unter <a href="https://account.smartthings.com/tokens" 
-    target='_blank'>https://account.smartthings.com/tokens</a> erstellt werden
-    muß. Dieses Modul benötigt ein Token mit mindestens folgenden Rechten:<ul>
+    Zur Anlage des Connectors ist das <b>SmartThings token</b> n&ouml;tig,
+    welches zun&auml;chst unter <a
+    href="https://account.smartthings.com/tokens" target='_blank'
+    >https://account.smartthings.com/tokens</a> erstellt werden mu&szlig;.
+    Dieses Modul ben&ouml;tigt ein Token mit mindestens folgenden Rechten:<ul>
     <li>Devices -> List all devices</li>
     <li>Devices -> See all devices</li>
     <li>Devices -> Control all devices</li>
     <li>Device Profiles -> See all device profiles</li>
-    </ul><br>
+    </ul><br></li>
 
-    <li><b>Phyische Geräte</b>:<br>
-    <code>define &lt;name&gt; SST &lt;device type&gt; IODev=&lt;connector device&gt;</code><br>
+    <li><b>Phyische Ger&auml;te</b>:<br>
+    <code>define &lt;name&gt; SST &lt;device type&gt; IODev=&lt;connector
+    device&gt;</code><br>
     <br>
-    <b>Sinnvollerweise überläßt man diese Erstellung dem Connector.</b><br>
-    Die Erstellung der FHEM Geräte für die physischen Geräte bedarf nur der
-    Angabe des <b>device type</b>, über den die z.B. die möglichen set
-    Befehle vordefiniert werden, sowie des <b>IODev</b>, welches auf den
-    Connector verweisen muß.<br>
+    <b>Sinnvollerweise &uuml;berl&auml;&szlig;t man diese Erstellung dem
+    Connector.</b><br>
+    Die Erstellung der FHEM Ger&auml;te f&uuml;r die physischen Ger&auml;te
+    bedarf nur der Angabe des <b>device type</b>, &uuml;ber den die z.B. die
+    m&ouml;glichen set Befehle vordefiniert werden, sowie des <b>IODev</b>,
+    welches auf den Connector verweisen mu&szlig;.<br></li>
   </ul><br>
 
   <a name="SSTset"></a>
@@ -1107,26 +1119,27 @@ sub SST_getDeviceStatus($$) {
 
     <a name="list_devices"></a>
     <li>list_devices<br>
-    Diese Funktion steht nur beim Connector zur Verfügung.<br>
-    Hierüber wird der Gerätescan gestartet, der dann sämtliche gefundnen
-    SmartThings Geräte in Readings schreibt.<br>
+    Diese Funktion steht nur beim Connector zur Verf&uuml;gung.<br>
+    Hier&uuml;ber wird der Ger&auml;tescan gestartet, der dann s&auml;mtliche
+    gefundnen SmartThings Ger&auml;te in Readings schreibt.<br>
     Wenn <i>autocreate</i> (s.u.) gesetzt ist, werden die entsprechenden FHEM
-    Geräte angelegt.<br>
+    Ger&auml;te angelegt.<br></li>
 
     <a name="status"></a>
     <li>status<br>
-    Diese Funktion steht beim Connector nicht zur Verfügung.<br>
-    Hierüber wird der Gerätestatus über die Cloud abgefragt und in Readings
-    geschrieben. Die verfügbaren Readings unterscheiden sich stark zwischen
-    verschiedenen Gerätetypen.<br>
+    Diese Funktion steht beim Connector nicht zur Verf&uuml;gung.<br>
+    Hier&uuml;ber wird der Ger&auml;testatus &uuml;ber die Cloud abgefragt und
+    in Readings geschrieben. Die verf&uuml;gbaren Readings unterscheiden sich
+    stark zwischen verschiedenen Ger&auml;tetypen.<br></li>
 
     <a name="x_options"></a>
     <li>x_options<br>
-    Diese Funktion steht beim Connector nicht zur Verfügung.<br>
-    Hierüber wird eine Liste möglicher Kommandos aus dem Gerätestatus der
-    Cloud erzeugt und in dem Attribut setList gespeichert.<br>
-    Um die Änderungen anzuzeigen, muß die Seite in FHEMWEB neu geladen
-    werden.<br>
+    Diese Funktion steht beim Connector nicht zur Verf&uuml;gung.<br>
+    Hier&uuml;ber wird eine Liste m&ouml;glicher Kommandos aus dem
+    Ger&auml;testatus der Cloud erzeugt und in dem Attribut setList
+    gespeichert.<br>
+    Um die &auml;nderungen anzuzeigen, mu&szlig; die Seite in FHEMWEB neu
+    geladen werden.<br></li>
 
   </ul><br>
 
@@ -1136,97 +1149,102 @@ sub SST_getDeviceStatus($$) {
 
     <a name="autocreate"></a>
     <li>autocreate {0|1|2}<br>
-    Nur für den Connector relevant. Default ist <b>0</b> (aus).<br>
-    Bei einem Wert von <b>0</b> werden keine Geräte durch den Gerätescan
-    angelegt.<br>
-    Bei einem Wert von <b>1</b> werden nur neue, noch nicht angelegte Geräte
-    durch den Gerätescan angelegt.<br>
-    Bei einem Wert von <b>2</b> werden alle gefundenen Geräte durch den
-    Gerätescan angelegt. Hierbei kann es zu Fehlermeldungen wegen zuvor nicht
-    entfernter Geräte kommen! Nach einem Gerätescan wird das Attribut wieder
-    auf <b>1</b> zurückgesetzt.<br>
+    Nur f&uuml;r den Connector relevant. Default ist <b>0</b> (aus).<br>
+    Bei einem Wert von <b>0</b> werden keine Ger&auml;te durch den
+    Ger&auml;tescan angelegt.<br>
+    Bei einem Wert von <b>1</b> werden nur neue, noch nicht angelegte
+    Ger&auml;te durch den Ger&auml;tescan angelegt.<br>
+    Bei einem Wert von <b>2</b> werden alle gefundenen Ger&auml;te durch den
+    Ger&auml;tescan angelegt. Hierbei kann es zu Fehlermeldungen wegen zuvor
+    nicht entfernter Ger&auml;te kommen! Nach einem Ger&auml;tescan wird das
+    Attribut wieder auf <b>1</b> zur&uuml;ckgesetzt.<br></li>
 
     <a name="autoextend_setList"></a>
     <li>autoextend_setList {0|1}<br>
-    Für den Connector irrelevant. Default ist <b>0</b> (aus).<br>
-    Bei einem Wert von <b>1</b> werden alle beim Gerätestatus erkanntens
-    Einstellmöglichkeiten, welche noch nicht mittels setList bekannt sind,
-    hinzugefügt.<br>
+    F&uuml;r den Connector irrelevant. Default ist <b>0</b> (aus).<br>
+    Bei einem Wert von <b>1</b> werden alle beim Ger&auml;testatus erkanntens
+    Einstellm&ouml;glichkeiten, welche noch nicht mittels setList bekannt sind,
+    hinzugef&uuml;gt.<br></li>
 
     <a name="brief_readings"></a>
     <li>brief_readings<br>
-    Für den Connector irrelevant. Default ist <b>1</b> (an).<br>
+    F&uuml;r den Connector irrelevant. Default ist <b>1</b> (an).<br>
     Ist dieser Wert an (<b>1</b>), werden die aus der Cloud bezogenen Namen
-    der einzelnen Readings nach fixen Regeln gekürzt, was die Lesbarkeit der
-    Readingnamen deutlich verbessert.<br>
-    Eine Deaktivierung dieses Attributs führt zu längeren, aber dafür 100%ig
-    eindeutigen Readingnamen. Wenn erwartete Reading vermisst werden, sollte
-    man diesen Wert ändern.<br>
+    der einzelnen Readings nach fixen Regeln gek&uuml;rzt, was die Lesbarkeit
+    der Readingnamen deutlich verbessert.<br>
+    Eine Deaktivierung dieses Attributs f&uuml;hrt zu l&auml;ngeren, aber
+    daf&uuml;r 100%ig eindeutigen Readingnamen. Wenn erwartete Reading vermisst
+    werden, sollte man diesen Wert &auml;ndern.<br></li>
 
     <a name="confirmation_delay"></a>
     <li>confirmation_delay<br>
-    Für den Connector irrelevant. Default ist <b>3</b>.<br>
+    F&uuml;r den Connector irrelevant. Default ist <b>3</b>.<br>
     Zeit in Sekunden, die nach dem Setzen eines Wertes gewartet wird, bevor der
-    Status abgefragt wird.<br>
+    Status abgefragt wird.<br></li>
 
     <a name="device_id"></a>
     <li>device_id<br>
-    Für den Connector irrelevant.<br>
-    Das ist die Samsung interne 32-Hexadezimal-Zeichen Gerätekennung. Sie wird
-    beim Gerätescan in die Readings des Connectors geschrieben.<br>
+    F&uuml;r den Connector irrelevant.<br>
+    Das ist die Samsung interne 32-Hexadezimal-Zeichen Ger&auml;tekennung. Sie
+    wird beim Ger&auml;tescan in die Readings des Connectors geschrieben.<br>
     Dieses Attribut wird bei der automatischen Erstellung durch den Connector
-    gesetzt und bedarf keiner Anpassung durch den Nutzer.<br>
+    gesetzt und bedarf keiner Anpassung durch den Nutzer.<br></li>
 
     <a name="device_name"></a>
     <li>device_name<br>
-    Für den Connector irrelevant.<br>
+    F&uuml;r den Connector irrelevant.<br>
     This is the Samsung internal device name.<br>
     Dieses Attribut wird bei der automatischen Erstellung durch den Connector
-    gesetzt und bedarf keiner Anpassung durch den Nutzer.<br>
+    gesetzt und bedarf keiner Anpassung durch den Nutzer.<br></li>
 
     <a name="device_type"></a>
-    <li>device_type {CONNECTOR|refrigerator|freezer|washer|dryer|TV|vacuumCleaner}<br>
+    <li>device_type
+    {CONNECTOR|refrigerator|freezer|washer|dryer|TV|vacuumCleaner}<br>
     Der Default ist <b>CONNECTOR</b>.<br>
-    Hiermit wird der physische Gerätetyp des FHEM Gerätes gesetzt.<br>
-    Der Gerätetyp <b>CONNECTOR</b> ist dem Connector vorbehalten.<br>
-    Jeder Gerätetyp bekommt bei der Erstellung einen anderen Satz an
-    Fähigkeiten, der zu unterschiedlichen Readings und v.a. unterschiedlichen
-    Befehlen für das set Kommando führen.<br>
+    Hiermit wird der physische Ger&auml;tetyp des FHEM Ger&auml;tes gesetzt.<br>
+    Der Ger&auml;tetyp <b>CONNECTOR</b> ist dem Connector vorbehalten.<br>
+    Jeder Ger&auml;tetyp bekommt bei der Erstellung einen anderen Satz an
+    F&auml;higkeiten, der zu unterschiedlichen Readings und v.a.
+    unterschiedlichen Befehlen f&uuml;r das set Kommando f&uuml;hren.<br>
     Dieses Attribut wird bei der automatischen Erstellung durch den Connector
-    gesetzt und bedarf keiner Anpassung durch den Nutzer.<br>
+    gesetzt und bedarf keiner Anpassung durch den Nutzer.<br></li>
 
     <a name="disable"></a>
     <li>disable {0|1}<br>
     Der Default ist 0 (aus).<br>
-    Bei einem Wert von <b>1</b> wird die Cloud nicht mehr zyklisch abgefragt.<br>
+    Bei einem Wert von <b>1</b> wird die Cloud nicht mehr zyklisch
+    abgefragt.<br></li>
 
     <a name="discard_units"></a>
     <li>discard_units {0|1}<br>
-    Für den Connector irrelevant.<br>
+    F&uuml;r den Connector irrelevant.<br>
     Bei einem Wert von <b>1</b> werden alle Readings ohne ggf. von Samsung zur
-    Verfügung gestellte Einheiten gesetzt. Das kann hilfreich sein, wenn
+    Verf&uuml;gung gestellte Einheiten gesetzt. Das kann hilfreich sein, wenn
     Temperaturen abgefragt werden, da hier sonst Readings wie <b>4 C</b>
-    erzeugt werden, anstatt <b>4 °C</b>.<br>
+    erzeugt werden, anstatt <b>4 °C</b>.<br></li>
 
     <a name="get_timeout"></a>
     <li>get_timeout<br>
     Der Default ist 10 Sekunden.<br>
-    Dieser Wert bestimmt den Timeout für Abfragen aus der Samsung Cloud. Bei
-    hohen Werten im Reading get_timeouts sollte hier der Wert erhöht werden.<br>
-    Zu hohe Werte können zum zeitweisen Einfrieren von FHEM führen.<br>
+    Dieser Wert bestimmt den Timeout f&uuml;r Abfragen aus der Samsung Cloud.
+    Bei hohen Werten im Reading get_timeouts sollte hier der Wert erh&ouml;ht
+    werden.<br>
+    Zu hohe Werte k&ouml;nnen zum zeitweisen Einfrieren von FHEM
+    f&uuml;hren.<br></li>
 
     <a name="interval"></a>
     <li>interval<br>
-    Für den Connector ist der Default <b>86400</b> (1 Tag).<br>
-    Für die physischen Geräte ist der Default <b>300</b> (5 Minuten).<br>
-    Hierbei handelt es sich um den Auffrischungszyklus in Sekunden.<br>
+    F&uuml;r den Connector ist der Default <b>86400</b> (1 Tag).<br>
+    F&uuml;r die physischen Ger&auml;te ist der Default <b>300</b> (5
+    Minuten).<br>
+    Hierbei handelt es sich um den Auffrischungszyklus in Sekunden.<br></li>
 
     <a name="IODev"></a>
     <li>IODev<br>
-    Für den Connector irrelevant.<br>
-    Dieser Wert enthält den Namen des Connector Geräts.<br>
+    F&uuml;r den Connector irrelevant.<br>
+    Dieser Wert enth&auml;lt den Namen des Connector Ger&auml;ts.<br>
     Dieses Attribut wird bei der automatischen Erstellung durch den Connector
-    gesetzt und bedarf keiner Anpassung durch den Nutzer.<br>
+    gesetzt und bedarf keiner Anpassung durch den Nutzer.<br></li>
 
     <a name="setList"></a>
     <li>setList<br>
@@ -1235,15 +1253,17 @@ sub SST_getDeviceStatus($$) {
     is a default which is set on device creation based on the device type.<br>
     If you feel this list is not correct, please inform the module owner for
     change requests to the default.<br>
-    If autoextend_setList is set, this list may grow on status updates.<br>
+    If autoextend_setList is set, this list may grow on status
+    updates.<br></li>
 
     <a name="set_timeout"></a>
     <li>set_timeout<br>
     Der Default ist 15 Sekunden.<br>
-    Dieser Wert bestimmt den Timeout für in die Samsung Cloud zu sendende
+    Dieser Wert bestimmt den Timeout f&uuml;r in die Samsung Cloud zu sendende
     Befehle. Bei hohen Werten im Reading set_timeouts sollte hier der Wert
-    erhöht werden.<br>
-    Zu hohe Werte können zum zeitweisen Einfrieren von FHEM führen.<br>
+    erh&ouml;ht werden.<br>
+    Zu hohe Werte k&ouml;nnen zum zeitweisen Einfrieren von FHEM
+    f&uuml;hren.<br></li>
 
   </ul><br>
 
@@ -1253,51 +1273,57 @@ sub SST_getDeviceStatus($$) {
 
     <a name="devices"></a>
     <li>device_.*<br>
-    Diese Readings werden im CONNECTOR für jedes über den Samsung SmartThings
-    Cloud Dienst erkannte Endgerät erzeut, und enthalten entweder den FHEM
-    Gerätenamen oder <b>new</b>, falls das Gerät noch nicht in FHEM angelegt
-    wurde. Setzt man den Wert auf etwas anderes (z.B. <b>nogo</b>), wird dieses
-    Gerät bei auf 1 gesetztem <b>autocreate</b> nicht angelegt.<br>
+    Diese Readings werden im CONNECTOR f&uuml;r jedes &uuml;ber den Samsung
+    SmartThings Cloud Dienst erkannte Endger&auml;t erzeut, und enthalten
+    entweder den FHEM Ger&auml;tenamen oder <b>new</b>, falls das Ger&auml;t
+    noch nicht in FHEM angelegt wurde. Setzt man den Wert auf etwas anderes
+    (z.B. <b>nogo</b>), wird dieses Ger&auml;t bei auf 1 gesetztem
+    <b>autocreate</b> nicht angelegt.<br></li>
 
     <a name="get_timeouts"></a>
     <li>get_timeouts<br>
     Dieses Reading zeigt, wie oft und wann zum letzten Mal die Abfrage der
-    Samsung SmartThings Cloud wegen Timeouts fehlgeschlagen ist.<br>
+    Samsung SmartThings Cloud wegen Timeouts fehlgeschlagen ist.<br></li>
 
     <a name="get_timeouts_row"></a>
     <li>get_timeouts_row<br>
     Dieses Reading zeigt, wie oft hintereinander die Abfrage der Samsung
     SmartThings Cloud aktuell wegen Timeouts fehlgeschlagen ist.<br>
-    Nach erfolgreicher Kommunikation wird dieser Wert zurückgesetzt.<br>
+    Nach erfolgreicher Kommunikation wird dieser Wert
+    zur&uuml;ckgesetzt.<br></li>
 
     <a name="lastrun"></a>
     <li>lastrun<br>
     Dieses Reading zeigt, wann der CONNECTOR zuletzt erfolgreich Informationen
-    aus der Samsung SmartThings Cloud abgerufen hat.<br>
+    aus der Samsung SmartThings Cloud abgerufen hat.<br></li>
 
     <a name="set_timeouts"></a>
     <li>set_timeouts<br>
     Dieses Reading zeigt, wie oft und wann zum letzten Mal das Absetzten eines
     Befehls in der Samsung SmartThings Cloud wegen Timeouts fehlgeschlagen
-    ist.<br>
+    ist.<br></li>
 
     <a name="set_timeouts_row"></a>
     <li>set_timeouts_row<br>
     Dieses Reading zeigt, wie oft hintereinander das Absetzten eines Befehls
     in der Samsung SmartThings Cloud aktuell wegen Timeouts fehlgeschlagen
     ist.<br>
-    Nach erfolgreicher Kommunikation wird dieser Wert zurückgesetzt.<br>
+    Nach erfolgreicher Kommunikation wird dieser Wert
+    zur&uuml;ckgesetzt.<br></li>
 
     <a name="other"></a>
     <li>andere Readings<br>
-    Alle anderen Readings der Endgeräte repräsentieren eine Capability, wie
-    Samsung es nennt. Diese Readings unterscheiden sich deutlich zwischen den
-    einzelnen Gerätetypen, weshalb hier nicht weiter auf sie eingegangen
-    wird.<br>
+    Alle anderen Readings der Endger&auml;te repr&auml;sentieren eine
+    Capability, wie Samsung es nennt. Diese Readings unterscheiden sich
+    deutlich zwischen den einzelnen Ger&auml;tetypen, weshalb hier nicht weiter
+    auf sie eingegangen
+    wird.<br></li>
 
   </ul><br>
 
-=end html
+</ul><br>
+
+=end html_DE
 
 =cut
 
