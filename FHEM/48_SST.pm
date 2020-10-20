@@ -732,8 +732,9 @@ sub SST_getDeviceStatus($$) {
                             # delve into next level, where there is no value... :/
                             foreach my $attribute ( keys %{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module} } ){
                                 next if $attribute eq 'timestamp'; # who cares about timestamps ...
-                                next unless defined $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute}; # ... or empty elements
-                                Log3 $hash, 3, "SST ($device): get $modus - unexpected hash reading at attribute level: $baselevel/$component/$capability/$module/$attribute of type " . ref( $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute} );
+                                next unless defined $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute}; # ... or empty elements ...
+                                next if $attribute eq 'unit' and not defined $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} # ... empty element's units
+                                Log3 $hash, 3, "SST ($device): get $modus - unexpected reading at attribute level: $baselevel/$component/$capability/$module/$attribute of type " . ref( $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute} );
                                 # TODO: propably extend interpretation if someone gets even more info
                             } # foreach attribute
                         }else{
