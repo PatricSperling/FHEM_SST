@@ -667,14 +667,14 @@ sub SST_getDeviceStatus($$) {
     my @disabled       = ();
     my %readings       = ();
     my $brief_readings = AttrNum($device, 'brief_readings', 1);
-    my $readings_o2a   = undef;
+    my $readings_v2d   = undef;
 
     # fill set command mapping
     foreach ( split /\s+/, AttrVal( $device, 'readings_map', '' ) ){
         my ( $rm_reading, $rm_mapping ) = split /:/;
         foreach( split /,/, $rm_mapping ){
             my ( $rm_value, $rm_display ) = split /=/;
-            $readings_o2a->{$rm_reading}->{$rm_value} = $rm_display;
+            $readings_v2d->{$rm_reading}->{$rm_value} = $rm_display;
         }
     }
 
@@ -692,10 +692,12 @@ sub SST_getDeviceStatus($$) {
                 if( $capability eq 'execute' ){
                     # we currently don't want readings for commands
                     next;
-                }elsif( $capability eq 'custom.disabledCapabilities' ){
-                    if( defined $jsonhash->{$baselevel}->{$component}->{$capability}->{disabledCapabilities}->{value} ){
+                }elsif( $capability =~ m/^custom.disabledC/ ){ # custom.disabledCapabilities / custom.disabledComponents
+                    my $sub = $capability;
+                    $sub =~ s/^custom\.//;
+                    if( defined $jsonhash->{$baselevel}->{$component}->{$capability}->{$sub}->{value} ){
                         # store it for later
-                        foreach ( @{ $jsonhash->{$baselevel}->{$component}->{$capability}->{disabledCapabilities}->{value} } ){
+                        foreach ( @{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$sub}->{value} } ){
                             push( @disabled, $component . '_' . $_ );
                         }
                     }
@@ -792,7 +794,7 @@ sub SST_getDeviceStatus($$) {
             }
 
             # possibly rewrite value from readings_map
-            $readings{$key} = $setList_o2a->{$reading}->{$readings{$key}} if defined $setList_o2a->{$reading}->{$readings{$key}};
+            $readings{$key} = $readings_v2d->{$reading}->{$readings{$key}} if defined $readings_v2d->{$reading}->{$readings{$key}};
 
             # create reading
             readingsBulkUpdate( $hash, $reading, $readings{$key}, 1 );
