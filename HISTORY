@@ -1,4 +1,14 @@
-2020-10-03 19:26:59 +0200 Version 0.7.18
+2020-10-20 22:40:23 +0200 Version 0.7.19
+2020-10-20 22:39:00 +0200 bugfix: auto identification of options
+2020-10-20 21:55:11 +0200 bugfix: skipping disabled components
+2020-10-20 21:41:53 +0200 feature: added attribute readings_map
+2020-10-20 16:16:12 +0200 bugfix: timestamp correction when milliseconds are missing
+2020-10-20 16:07:30 +0200 bugfix: removed log messages on bare units
+2020-10-11 17:18:55 +0200 fixed inline documentation issues
+2020-10-07 07:39:02 +0200 reviewed internal documentation
+2020-10-06 17:18:40 +0200 fixed markup-typo in inline help
+2020-10-03 23:29:29 +0200 args
+2020-10-03 23:12:34 +0200 changed order of files
 2020-10-03 19:21:47 +0200 Version 0.7.18
 2020-10-03 19:19:37 +0200 removed device dependent predefines for discard_units ans setList
 2020-10-03 18:46:36 +0200 added icon for SmartThings cloud

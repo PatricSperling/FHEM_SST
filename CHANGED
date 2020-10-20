@@ -1,4 +1,15 @@
 FHEM module SST last 3 changes:
+2020-10-20: Version 0.7.19
+ - bugfix: auto identification of options
+ - bugfix: skipping disabled components
+ - feature: added attribute readings_map
+ - bugfix: timestamp correction when milliseconds are missing
+ - bugfix: removed log messages on bare units
+ - fixed inline documentation issues
+ - reviewed internal documentation
+ - fixed markup-typo in inline help
+ - args
+ - changed order of files
 2020-10-03: Version 0.7.18
  - removed device dependent predefines for discard_units ans setList
  - added icon for SmartThings cloud
