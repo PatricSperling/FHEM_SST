@@ -708,7 +708,7 @@ sub SST_getDeviceStatus($$) {
 
                                         # recalculate timestamps
                                         $thisvalue = FmtDateTime( fhemTimeGm( $6, $5, $4, $3, $2 - 1, $1 - 1900 ) )
-                                            if $thisvalue =~ m/^([0-9]{4})-([0-9]{2})-([0-9]{2})T([012][0-9]):([0-5][0-9]):([0-5][0-9])\..*Z/;
+                                            if $thisvalue =~ m/^([0-9]{4})-([0-9]{2})-([0-9]{2})T([012][0-9]):([0-5][0-9]):([0-5][0-9])[\.0-9]*Z/;
 
                                         # remember reading
                                         my $subreading = makeReadingName( $reading . '-' . $subval );
@@ -719,7 +719,7 @@ sub SST_getDeviceStatus($$) {
 
                                     # recalculate timestamps
                                     $thisvalue = FmtDateTime( fhemTimeGm( $6, $5, $4, $3, $2 - 1, $1 - 1900 ) )
-                                        if $thisvalue =~ m/^([0-9]{4})-([0-9]{2})-([0-9]{2})T([012][0-9]):([0-5][0-9]):([0-5][0-9])\..*Z/;
+                                        if $thisvalue =~ m/^([0-9]{4})-([0-9]{2})-([0-9]{2})T([012][0-9]):([0-5][0-9]):([0-5][0-9])[\.0-9]*Z/;
 
                                     # remember reading
                                     $readings{$reading} = $thisvalue;
