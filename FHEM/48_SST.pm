@@ -66,6 +66,7 @@ sub SST_Initialize($) {
         'get_timeout',
         'interval',
         'IODev',
+        'readings_map',
         'setList',
         'set_timeout'
     );
@@ -372,6 +373,16 @@ sub SST_Set($@) {
     my ($component, $capability, $module) = split( '_', $hash->{'.R2CCC'}->{$reading} );
     Log3 $hash, 4, "SST ($device): set $component/$capability - $module/" . join( ',', @aArguments );
 
+    # possibly translate 1st command prior cloud connect
+    foreach ( split /\s+/, AttrVal( $device, 'readings_map', '' ) ){
+        my ( $rm_reading, $rm_mapping ) = split /:/;
+        next unless $rm_reading eq $reading;
+        foreach( split /,/, $rm_mapping ){
+            my ( $rm_value, $rm_display ) = split /=/;
+            $aArguments[0] = $rm_value if "$aArguments[0]" eq "$rm_display";
+        }
+    }
+
     # try to auto-identify command name
     if( $module eq 'switch' ){
         # easy for switches...
@@ -656,6 +667,16 @@ sub SST_getDeviceStatus($$) {
     my @disabled       = ();
     my %readings       = ();
     my $brief_readings = AttrNum($device, 'brief_readings', 1);
+    my $readings_o2a   = undef;
+
+    # fill set command mapping
+    foreach ( split /\s+/, AttrVal( $device, 'readings_map', '' ) ){
+        my ( $rm_reading, $rm_mapping ) = split /:/;
+        foreach( split /,/, $rm_mapping ){
+            my ( $rm_value, $rm_display ) = split /=/;
+            $readings_o2a->{$rm_reading}->{$rm_value} = $rm_display;
+        }
+    }
 
     # parse JSON struct
     Log3 $hash, 5, "SST ($device): get $modus - received JSON data";
@@ -733,7 +754,7 @@ sub SST_getDeviceStatus($$) {
                             foreach my $attribute ( keys %{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module} } ){
                                 next if $attribute eq 'timestamp'; # who cares about timestamps ...
                                 next unless defined $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute}; # ... or empty elements ...
-                                next if $attribute eq 'unit' and not defined $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} # ... empty element's units
+                                next if $attribute eq 'unit' and not defined $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value}; # ... empty element's units
                                 Log3 $hash, 3, "SST ($device): get $modus - unexpected reading at attribute level: $baselevel/$component/$capability/$module/$attribute of type " . ref( $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute} );
                                 # TODO: propably extend interpretation if someone gets even more info
                             } # foreach attribute
@@ -757,14 +778,23 @@ sub SST_getDeviceStatus($$) {
         readingsBulkUpdate( $hash, 'setList_hint', join( ' ', @setListHints ), 1 ) if $#setListHints >= 0;
         EACHREADING: foreach my $key ( keys %readings ){
             my $reading = $key;
+
+            # skip disabled capabilities
             foreach (@disabled){
                 my $regex = '^' . $_ . '_';
                 next EACHREADING if $key =~ m/$regex/;
             }
+
+            # abbreviate reading name
             if( $brief_readings ){
                 $reading =~ s/_[^_]+_/_/; # remove middle part (capability)
                 $reading =~ s/^main_//i;  # remove main component
             }
+
+            # possibly rewrite value from readings_map
+            $readings{$key} = $setList_o2a->{$reading}->{$readings{$key}} if defined $setList_o2a->{$reading}->{$readings{$key}};
+
+            # create reading
             readingsBulkUpdate( $hash, $reading, $readings{$key}, 1 );
         }
         readingsEndUpdate($hash, 1);
@@ -1014,16 +1044,21 @@ sub SST_getDeviceStatus($$) {
     This attribute is automatically filled on device generation and usually
     does not require your attention.<br></li>
 
+    <a name="readings_map"></a>
+    <li>readings_map<br>
+    Not valid for connector device.<br>
+    With this list of set commands and aliases the displayed names for the
+    readings and the set commands can be translated into something useful.<br>
+    The format is:<br>
+    <code>Reading:Value=Display[,Value=Display]</code><br></li>
+
+    <a name="set_timeout"></a>
     <a name="setList"></a>
     <li>setList<br>
     Not valid for connector device.<br>
-    This is the list of set commands available for your device (type). There
-    is a default which is set on device creation based on the device type.<br>
-    If you feel this list is not correct, please inform the module owner for
-    change requests to the default.<br>
+    This is the list of set commands available for your device (type).<br>
     If autoextend_setList is set, this list may grow on status updates.<br></li>
 
-    <a name="set_timeout"></a>
     <li>set_timeout<br>
     Defaults to 15 seconds.
     This is the timeout for cloud set requests in seconds. If your set_timeouts
@@ -1247,15 +1282,18 @@ sub SST_getDeviceStatus($$) {
     Dieses Attribut wird bei der automatischen Erstellung durch den Connector
     gesetzt und bedarf keiner Anpassung durch den Nutzer.<br></li>
 
+    <a name="readings_map"></a>
+    <li>readings_map<br>
+    F&uuml;r den Connector irrelevant.<br>
+    Mittels dieser Liste k&ouml;nnen Befehlen lesbare Optionen zugewiesen
+    werden.<br>
+    Das Format ist:<br>
+    <code>Reading:Value=Display[,Value=Display]</code><br></li>
+
     <a name="setList"></a>
     <li>setList<br>
-    Not valid for connector device.<br>
-    This is the list of set commands available for your device (type). There
-    is a default which is set on device creation based on the device type.<br>
-    If you feel this list is not correct, please inform the module owner for
-    change requests to the default.<br>
-    If autoextend_setList is set, this list may grow on status
-    updates.<br></li>
+    F&uuml;r den Connector irrelevant.<br>
+    Diese Liste beinhaltet alle set Befehle mit deren Optionen.<br></li>
 
     <a name="set_timeout"></a>
     <li>set_timeout<br>
