@@ -1,6 +1,6 @@
 ################################################################################
 # 48_SST.pm
-#   Version 0.7.18 (2020-10-03)
+#   Version 0.7.19 (2020-10-20)
 #
 # SYNOPSIS
 #   Samsung SmartThings Connecton Module for FHEM
@@ -720,6 +720,8 @@ sub SST_getDeviceStatus($$) {
                                 if( ref $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} eq 'ARRAY' ){
                                     # this might always indicate value options... let's assume that for the time being
                                     push @setListHints, $component . '_' . $capability . ':' . join( ',', @{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} } );
+                                    # adapt reading name hope this will always work...
+                                    $reading = makeReadingName( $component . '_' . $capability . '_' . $capability );
                                     $ccc2cmd{$reading} = join( ',', @{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} } );
                                     next;
                                 }
@@ -777,7 +779,7 @@ sub SST_getDeviceStatus($$) {
     # create/update all readings
     if( $modus eq 'status' ){
         readingsBeginUpdate($hash);
-        readingsBulkUpdate( $hash, 'setList_hint', join( ' ', @setListHints ), 1 ) if $#setListHints >= 0;
+        readingsBulkUpdate( $hash, 'setList_hint', join( "\n", @setListHints ), 1 ) if $#setListHints >= 0;
         EACHREADING: foreach my $key ( keys %readings ){
             my $reading = $key;
 
