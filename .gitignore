@@ -3,4 +3,5 @@
 *.precommit
 *.backup-*
 *.bak
+*.tdy
 data/
