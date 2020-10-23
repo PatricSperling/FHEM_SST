@@ -834,6 +834,26 @@ sub SST_getDeviceStatus($$) {
         $hash->{'.R2CCC'} = { %rdn2ccc };
         if( $modus eq 'x_options' ){
             $setList =~ s/^ //;
+            my @newSetList = ();
+            foreach ( split / /, $setList ){
+                my ( $sl_reading, $sl_mapping ) = split /:/, $_;
+                if( defined $readings_v2d->{$sl_reading} ){
+                    my $newSet = "$sl_reading";
+                    foreach my $sl_value ( split /,/, $sl_mapping ){
+                        $newSet .= ',';
+                        if( defined $readings_v2d->{$sl_reading}->{$sl_value} ){
+                            $newSet .= $readings_v2d->{$sl_reading}->{$sl_value};
+                        }else{
+                            $newSet .= $sl_value;
+                        }
+                    }
+                    $newSet =~ s/,/:/;
+                    push @newSetList, $newSet;
+                }else{
+                    push @newSetList, $_;
+                }
+            }
+            $setList = join ' ', @newSetList;
             $attr{$device}{setList} = $setList;
         }
         Log3 $hash, 5, "SST ($device): get $modus - identified readings to c3 path mappings:\n" . Dumper( $hash->{'.R2CCC'} );
