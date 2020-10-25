@@ -11,6 +11,7 @@ In FHEM run:
 ```
 update add https://raw.githubusercontent.com/PatricSperling/FHEM_SST/master/controls_SST.txt
 update all
+update
 shutdown restart
 ```
 
