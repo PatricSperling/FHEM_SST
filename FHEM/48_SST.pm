@@ -823,7 +823,7 @@ sub SST_getDeviceStatus($$) {
     # create/update all readings
     if( $modus eq 'status' ){
         readingsBeginUpdate($hash);
-        readingsBulkUpdate( $hash, 'setList_hint', join( "\n", @setListHints ), 1 ) if $#setListHints >= 0;
+        readingsBulkUpdate( $hash, 'setList_hint', join( "\n", sort @setListHints ), 1 ) if $#setListHints >= 0;
         EACHREADING: foreach my $key ( keys %readings ){
             my $reading = $key;
 
