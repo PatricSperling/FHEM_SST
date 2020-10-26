@@ -1,6 +1,6 @@
 ################################################################################
 # 48_SST.pm
-#   Version 0.7.19 (2020-10-20)
+#   Version 0.7.20 (2020-10-26)
 #
 # SYNOPSIS
 #   Samsung SmartThings Connecton Module for FHEM
@@ -703,7 +703,7 @@ sub SST_getDeviceStatus($$) {
         }
     }
 
-    my %setpointrange = {};
+    my %setpointrange = ();
     my %option2reading = {
         'custom.airConditionerOptionalMode' => 'acOptionalMode',
     };
@@ -818,7 +818,6 @@ sub SST_getDeviceStatus($$) {
     Log3 $hash, 5, "SST ($device): get $modus - identified disabled components:\n" . Dumper( [ @disabled ] );
     Log3 $hash, 5, "SST ($device): get $modus - identified readings:\n" . Dumper( { %readings } );
     Log3 $hash, 5, "SST ($device): get $modus - identified setList options:\n" . Dumper( [ @setListHints ] );
-    Log3 $hash, 5, "SST ($device): get $modus - \n" . Dumper( { %setpointrange } );
 
     # create/update all readings
     if( $modus eq 'status' ){
@@ -875,6 +874,12 @@ sub SST_getDeviceStatus($$) {
                 $setList .= " $reading"; 
                 if( defined( $setpointrange{min} ) and defined( $setpointrange{max} ) and $setpointrange{cnt} == 1 ){
                     $setList .= ':' . join ',', $setpointrange{min} .. $setpointrange{max};
+                }elsif( $device_type eq 'refrigerator' ){
+                    if( $key =~ m/^cooler_/ ){
+                        $setList .= ':' . join ',', 1 .. 7;
+                    }elsif( $key =~ m/^freezer_/ ){
+                        $setList .= ':' . join ',', -23 .. -15;
+                    }
                 }
             }
         }
