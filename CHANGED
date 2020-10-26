@@ -1,4 +1,9 @@
 FHEM module SST last 3 changes:
+2020-10-26: Version 0.7.20
+ - feature: predefined ranges for fridge/freezer temperatues
+ - bugfix: sorting setList_hint (changing order randomly)
+ - feature: enhanced default values
+ - feature: heed readings_map on get x_options
 2020-10-20: Version 0.7.19
  - bugfix: auto identification of options
  - bugfix: skipping disabled components
@@ -16,13 +21,3 @@ FHEM module SST last 3 changes:
  - fixed icon properties
  - added new icons for SmartThings and TVs
  - removal of temperature unit on setting
-2020-10-02: Version 0.7.17
- - changed logging a bit
- - added documentation for confirmation_delay
- - fixed icase mismatch issue for On/Off values
- - added confirmation delay when setting data
- - fixed number setting issue
- - fixed internal timer issue
- - aligned log messages
- - added write-back to CONNECTOR on device deletion
- - got rid of a perl warning
