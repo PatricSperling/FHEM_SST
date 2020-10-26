@@ -68,6 +68,7 @@ sub SST_Initialize($) {
         'IODev',
         'readings_map',
         'setList',
+        'setList_static',
         'set_timeout'
     );
     $hash->{AttrList} = join(" ", @attrList)." ".$readingFnAttributes;
@@ -89,6 +90,38 @@ sub SST_Define($$) {
     $hash->{name}     = $aArguments[0];
     $attr{$aArguments[0]}{device_type} = '';
     $attr{$aArguments[0]}{IODev}       = '';
+
+    # ENTRYPOINT new device types (3/4)
+    my $predefines = {
+        'CONNECTOR' => {
+            'icon' => 'samsung_smartthings',
+        },
+        'refrigerator' => {
+            'icon' => 'samsung_sidebyside',
+            'stateFormat' => 'cooler_temperature °C (cooler_contact)<br>\nfreezer_temperature °C (freezer_contact)',
+            'discard_units' => 1,
+        },
+        'room_a_c' => {
+            'icon' => 'samsung_ac',
+            'stateFormat' => 'airConditionerMode',
+            'setList_static' => 'fanOscillationMode:all,fixed,horizontal,vertical',
+            'readings_map' => 'switch:on=an,off=aus',
+            'discard_units' => 1,
+        },
+        'washer' => {
+            'icon' => 'scene_washing_machine',
+            'stateFormat' => 'machineState<br>washerJobState',
+            #'readings_map' => 'washerCycle:Table_00_Course_5B=Baumwolle,Table_00_Course_65=Wolle,Table_00_Course_5C=Schnelle_Wäsche,Table_00_Course_63=Trommelreinigung,Table_00_Course_67=Synthetik',
+            'readings_map' => 'washerCycle:Table_00_Course_5B=Baumwolle,Table_00_Course_5C=Schnelle_Wäsche,Table_00_Course_63=Trommelreinigung,Table_00_Course_65=Wolle,Table_00_Course_67=Synthetik,Table_02_Course_1B=Baumwolle,Table_02_Course_1C=ECO_40-60,Table_02_Course_1D=SuperSpeed,Table_02_Course_1E=Schnelle_Wäsche,Table_02_Course_1F=Kaltwäsche_Intensiv,Table_02_Course_20=Hygiene-Dampf,Table_02_Course_21=Buntwäsche,Table_02_Course_22=Wolle,Table_02_Course_23=Outdoor,Table_02_Course_24=XXL-Wäsche,Table_02_Course_25=Pflegeleicht,Table_02_Course_26=Feinwäsche,Table_02_Course_27=Spülen+Schleudern,Table_02_Course_28=Abpumpen+Schleudern,Table_02_Course_29=Trommelreinigung+,Table_02_Course_2A=Jeans,Table_02_Course_2D=Super_Leise,Table_02_Course_2E=Baby_Care_Intensiv,Table_02_Course_2F=Sportkleidung,Table_02_Course_30=Bewölkter_Tag,Table_02_Course_32=Hemden,Table_02_Course_33=Handtücher',
+        },
+        'tv' => {
+            'icon' => 'samsung_tv',
+            'stateFormat' => 'switch<br>tvChannel',
+        },
+        'vacuumCleaner' => {
+            'icon' => 'vacuum_top',
+        }
+    };
 
     # on more attributes - analyze and act correctly
     my $index = 2;
@@ -139,15 +172,22 @@ sub SST_Define($$) {
     # make sure we have a device type
     $attr{$aArguments[0]}{device_type} = 'CONNECTOR' if $attr{$aArguments[0]}{device_type} eq '';
 
+    # if we're in a redefine, don't set any defaults
+    if( not defined $hash->{TOKEN} and not defined $attr{$aArguments[0]}{device_id} ){
+        # differ device types
+        if( $attr{$aArguments[0]}{device_type} eq 'CONNECTOR' ){
+        }else{
+        }
+    }
     # differ device types
+    my $redefine = 1;
     if( $attr{$aArguments[0]}{device_type} eq 'CONNECTOR' ){
         # if we're in a redefine, don't set any defaults
         unless( defined $hash->{TOKEN} ){
             $hash->{TOKEN} = $tokenOrDevice;
             $def_interval = 86400 if $def_interval < 0;
             $attr{$aArguments[0]}{interval} = $def_interval;
-            $attr{$aArguments[0]}{icon}  = 'it_server';
-            $attr{$aArguments[0]}{icon}  = 'samsung_smartthings';
+            $redefine = 0;
         }
         delete $attr{$aArguments[0]}{IODev};
         delete $attr{$aArguments[0]}{setList};
@@ -157,30 +197,15 @@ sub SST_Define($$) {
             $def_interval = 300 if $def_interval < 0;
             $attr{$aArguments[0]}{interval} = $def_interval;
             $attr{$aArguments[0]}{device_id} = $tokenOrDevice if $tokenOrDevice;
-            # ENTRYPOINT new device types (3/4)
-            if( lc $attr{$aArguments[0]}{device_type} eq 'refrigerator' ){
-                $attr{$aArguments[0]}{icon}          = 'samsung_sidebyside';
-                #$attr{$aArguments[0]}{setList}       = 'fridge_temperature rapidCooling:off,on rapidFreezing:off,on defrost:on,off waterFilterResetType:noArg';
-                $attr{$aArguments[0]}{stateFormat}   = "cooler_temperature °C (cooler_contact)<br>\nfreezer_temperature °C (freezer_contact)";
-                #$attr{$aArguments[0]}{discard_units} = 1;
-            }elsif( lc $attr{$aArguments[0]}{device_type} eq 'tv' ){
-                $attr{$aArguments[0]}{icon}        = 'samsung_tv';
-                #$attr{$aArguments[0]}{setList}     = 'power:off,on,inbetween';
-                $attr{$aArguments[0]}{stateFormat} = 'switch<br>tvChannel';
-            }elsif( lc $attr{$aArguments[0]}{device_type} eq 'washer' ){
-                $attr{$aArguments[0]}{icon}        = 'scene_washing_machine';
-                #$attr{$aArguments[0]}{setList}     = 'washerMode:regular,heavy,rinse,spinDry state:pause,run,stop';
-                $attr{$aArguments[0]}{stateFormat} = 'machineState<br>washerJobState';
-            }elsif( lc $attr{$aArguments[0]}{device_type} eq 'room_a_c' ){
-                $attr{$aArguments[0]}{icon}        = 'samsung_ac';
-                $attr{$aArguments[0]}{stateFormat} = 'airConditionerMode';
-            }elsif( lc $attr{$aArguments[0]}{device_type} eq 'vacuumCleaner' ){
-                $attr{$aArguments[0]}{icon}    = 'vacuum_top';
-                #$attr{$aArguments[0]}{setList} = 'recharge:noArg turbo:on,off,silence mode:auto,part,repeat,manual,stop,map';
-            }else{
-                $attr{$aArguments[0]}{icon} = 'unknown';
-            }
+            $redefine = 0;
         }
+    }
+    unless( $redefine ){
+        # set specific defaults
+        foreach ( keys %{ $predefines->{ lc( $attr{$aArguments[0]}{device_type} ) } } ){
+            $attr{$aArguments[0]}{$_} = $predefines->{ $attr{$aArguments[0]}{device_type} }->{$_};
+        }
+        $attr{$aArguments[0]}{icon} = 'unknown' unless defined $attr{$aArguments[0]}{icon};
     }
 
     Log3 $aArguments[0], 3, "SST ($aArguments[0]): define - $attr{$aArguments[0]}{device_type} defined as $aArguments[0]";
@@ -678,6 +703,11 @@ sub SST_getDeviceStatus($$) {
         }
     }
 
+    my %setpointrange = {};
+    my %option2reading = {
+        'custom.airConditionerOptionalMode' => 'acOptionalMode',
+    };
+
     # parse JSON struct
     Log3 $hash, 5, "SST ($device): get $modus - received JSON data";
     foreach my $baselevel ( keys %{ $jsonhash } ){
@@ -705,7 +735,7 @@ sub SST_getDeviceStatus($$) {
                 }
 
                 if( ref $jsonhash->{$baselevel}->{$component}->{$capability} eq 'HASH' ){
-                    foreach my $module ( keys %{ $jsonhash->{$baselevel}->{$component}->{$capability} } ){
+                    foreach my $module ( sort keys %{ $jsonhash->{$baselevel}->{$component}->{$capability} } ){
                         #Log3 $hash, 5, "SST ($device): get $modus - parsing module: $module";
                         if( ref $jsonhash->{$baselevel}->{$component}->{$capability}->{$module} eq 'HASH' ){
                             if( defined $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} ){
@@ -720,13 +750,16 @@ sub SST_getDeviceStatus($$) {
                                 if( ref $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} eq 'ARRAY' ){
                                     # this might always indicate value options... let's assume that for the time being
                                     push @setListHints, $component . '_' . $capability . ':' . join( ',', @{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} } );
-                                    # adapt reading name hope this will always work...
-                                    $reading = makeReadingName( $component . '_' . $capability . '_' . $capability );
+                                    # heed mapping
+                                    if( defined $option2reading{$module} ){
+                                        $reading = makeReadingName( $component . '_' . $capability . '_' . $option2reading{$module} );
+                                    }else{
+                                        # adapt reading name hope this will always work...
+                                        $reading = makeReadingName( $component . '_' . $capability . '_' . $capability );
+                                    }
                                     $ccc2cmd{$reading} = join( ',', @{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} } );
                                     next;
-                                }
-
-                                if( ref $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} eq 'HASH' ){
+                                }elsif( ref $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} eq 'HASH' ){
                                     # multiple values (HASHes)
                                     foreach my $subval ( keys %{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} } ){
                                         $thisvalue = $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value}->{$subval};
@@ -745,6 +778,16 @@ sub SST_getDeviceStatus($$) {
                                     # recalculate timestamps
                                     $thisvalue = FmtDateTime( fhemTimeGm( $6, $5, $4, $3, $2 - 1, $1 - 1900 ) )
                                         if $thisvalue =~ m/^([0-9]{4})-([0-9]{2})-([0-9]{2})T([012][0-9]):([0-5][0-9]):([0-5][0-9])[\.0-9]*Z/;
+
+                                    # save min and max limitations
+                                    if( $module eq 'minimumSetpoint' ){
+                                        $setpointrange{min} = $thisvalue;
+                                        next;
+                                    }elsif( $module eq 'maximumSetpoint' ){
+                                        $setpointrange{max} = $thisvalue;
+                                        next;
+                                    }
+                                    $setpointrange{cnt}++ if $module =~ m/Setpoint$/;
 
                                     # remember reading
                                     $readings{$reading} = $thisvalue;
@@ -775,6 +818,7 @@ sub SST_getDeviceStatus($$) {
     Log3 $hash, 5, "SST ($device): get $modus - identified disabled components:\n" . Dumper( [ @disabled ] );
     Log3 $hash, 5, "SST ($device): get $modus - identified readings:\n" . Dumper( { %readings } );
     Log3 $hash, 5, "SST ($device): get $modus - identified setList options:\n" . Dumper( [ @setListHints ] );
+    Log3 $hash, 5, "SST ($device): get $modus - \n" . Dumper( { %setpointrange } );
 
     # create/update all readings
     if( $modus eq 'status' ){
@@ -809,7 +853,7 @@ sub SST_getDeviceStatus($$) {
         # filling setList
         my %rdn2ccc=();
         my $setList = '';
-        EACHREADING: foreach my $key ( keys %readings ){
+        EACHREADING: foreach my $key ( sort keys %readings ){
             my $reading = $key;
             foreach (@disabled){
                 my $regex = '^' . $_ . '_';
@@ -829,12 +873,17 @@ sub SST_getDeviceStatus($$) {
                 $setList .= " $reading:On,Off"; # weirdly this is upper case on get, but lower case on set...
             }elsif( $key =~ m/Setpoint$/ ){
                 $setList .= " $reading"; 
+                if( defined( $setpointrange{min} ) and defined( $setpointrange{max} ) and $setpointrange{cnt} == 1 ){
+                    $setList .= ':' . join ',', $setpointrange{min} .. $setpointrange{max};
+                }
             }
         }
         $hash->{'.R2CCC'} = { %rdn2ccc };
         if( $modus eq 'x_options' ){
-            $setList =~ s/^ //;
             my @newSetList = ();
+            $setList .= ' ' . AttrVal( $device, 'setList_static', '' );
+            $setList =~ s/^ //;
+            $setList =~ s/ $//;
             foreach ( split / /, $setList ){
                 my ( $sl_reading, $sl_mapping ) = split /:/, $_;
                 if( defined $readings_v2d->{$sl_reading} ){
@@ -1076,13 +1125,20 @@ sub SST_getDeviceStatus($$) {
     The format is:<br>
     <code>Reading:Value=Display[,Value=Display]</code><br></li>
 
-    <a name="set_timeout"></a>
     <a name="setList"></a>
     <li>setList<br>
     Not valid for connector device.<br>
     This is the list of set commands available for your device (type).<br>
     If autoextend_setList is set, this list may grow on status updates.<br></li>
 
+    <a name="setList_static"></a>
+    <li>setList_static<br>
+    Not valid for connector device.<br>
+    This is the list of set commands to be kept for your device (type) even on
+    running x_options.<br>
+    Any predefines by SST will be initially stored in this attribute.<br></li>
+
+    <a name="set_timeout"></a>
     <li>set_timeout<br>
     Defaults to 15 seconds.
     This is the timeout for cloud set requests in seconds. If your set_timeouts
@@ -1318,6 +1374,13 @@ sub SST_getDeviceStatus($$) {
     <li>setList<br>
     F&uuml;r den Connector irrelevant.<br>
     Diese Liste beinhaltet alle set Befehle mit deren Optionen.<br></li>
+
+    <a name="setList_static"></a>
+    <li>setList_static<br>
+    F&uuml;r den Connector irrelevant.<br>
+    Diese Liste beinhaltet initial alle durch SST für diesen Ger&auml;teetyp
+    vordefinierten set Befehle mit deren Optionen. Bei x_options L&auml;ufen
+    werden diese Einträge in setList &uuml;berf&uuml;hrt.<br></li>
 
     <a name="set_timeout"></a>
     <li>set_timeout<br>
