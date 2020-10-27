@@ -62,7 +62,7 @@ sub SST_Initialize($) {
         'device_name',
         'device_type:CONNECTOR,refrigerator,freezer,TV,washer,dryer,vacuumCleaner,room_a_c',
         'disable:1,0',
-        'discard_units:0,1',
+        'discard_units:1,0',
         'get_timeout',
         'interval',
         'IODev',
@@ -99,14 +99,12 @@ sub SST_Define($$) {
         'refrigerator' => {
             'icon' => 'samsung_sidebyside',
             'stateFormat' => 'cooler_temperature °C (cooler_contact)<br>\nfreezer_temperature °C (freezer_contact)',
-            'discard_units' => 1,
         },
         'room_a_c' => {
             'icon' => 'samsung_ac',
             'stateFormat' => 'airConditionerMode',
             'setList_static' => 'fanOscillationMode:all,fixed,horizontal,vertical',
             'readings_map' => 'switch:on=an,off=aus',
-            'discard_units' => 1,
         },
         'washer' => {
             'icon' => 'scene_washing_machine',
@@ -391,9 +389,6 @@ sub SST_Set($@) {
     # exit if reading is unknown
     return "Could not identify internal name for value $reading!" unless defined $hash->{'.R2CCC'}->{$reading};
 
-    # exit if reading not defined in setList
-    # TODO
-
     # split up communication path
     my ($component, $capability, $module) = split( '_', $hash->{'.R2CCC'}->{$reading} );
     Log3 $hash, 4, "SST ($device): set $component/$capability - $module/" . join( ',', @aArguments );
@@ -653,7 +648,7 @@ sub SST_getDeviceStatus($$) {
     my ($device, $modus) = @_;
     my $hash             = $defs{$device};
     my $device_type      = AttrVal($device, 'device_type', 'CONNECTOR');
-    my $nounits          = AttrNum($device, 'discard_units', 0);
+    my $nounits          = AttrNum($device, 'discard_units', 1);
     my $token            = undef;
     return "Cannot get $modus for the CONNECTOR device." if $device_type eq 'CONNECTOR';
     my $connector = AttrVal($device, 'IODev', undef);
@@ -1097,11 +1092,10 @@ sub SST_getDeviceStatus($$) {
 
     <a name="discard_units"></a>
     <li>discard_units {0|1}<br>
-    Not valid for connector device. Defaults to <b>0</b> (off).<br>
-    If set to <b>1</b> all readings (aka Samsung capabilities) will be stored
-    without any units. This might be helpful as Samsung i.e. does not provide
-    the degree symbol for temperatures, resulting in readings like <b>4 C</b>
-    instead of <b>4 °C</b>.<br></li>
+    Not valid for connector device. Defaults to <b>1</b> (off).<br>
+    If set to <b>0</b> all readings (aka Samsung capabilities) will be stored
+    including the transmitted units. This is not the default behaviour of FHEM.
+    Thus you should only set this to <b>0</b> for debugging reasons.<br></li>
 
     <a name="get_timeout"></a>
     <li>get_timeout<br>
@@ -1335,17 +1329,18 @@ sub SST_getDeviceStatus($$) {
 
     <a name="disable"></a>
     <li>disable {0|1}<br>
-    Der Default ist 0 (aus).<br>
+    Der Default ist <b>0</b> (aus).<br>
     Bei einem Wert von <b>1</b> wird die Cloud nicht mehr zyklisch
     abgefragt.<br></li>
 
     <a name="discard_units"></a>
     <li>discard_units {0|1}<br>
-    F&uuml;r den Connector irrelevant.<br>
-    Bei einem Wert von <b>1</b> werden alle Readings ohne ggf. von Samsung zur
-    Verf&uuml;gung gestellte Einheiten gesetzt. Das kann hilfreich sein, wenn
-    Temperaturen abgefragt werden, da hier sonst Readings wie <b>4 C</b>
-    erzeugt werden, anstatt <b>4 °C</b>.<br></li>
+    F&uuml;r den Connector irrelevant. Der Default ist <b>1i</b>.<br>
+    Wird dieser Wert auf <b>0</b> gesetzt, werden alle Readings inclusive der
+    von Samsung zurVerf&uuml;gung gestellten Einheiten gespeichert, was nicht
+    dem Standardverhalten von FHEM entspricht.<br>
+    Daher sollte dieser Wert nur kurzzeitig (z.B. bei Ungewissheit &uuml;ber
+    die Einheit eines Readings) auf <b>0</b> gesetzt werden.<br></li>
 
     <a name="get_timeout"></a>
     <li>get_timeout<br>
