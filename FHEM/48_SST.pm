@@ -432,11 +432,14 @@ sub SST_Set($@) {
     # handle/set command arguments
     for( my $i = 0 ; $i <= $#aArguments ; $i++ ){
         if( $aArguments[$i] =~ m/^[0-9]+$/ or $aArguments[$i] =~ m/^-\d+/ ){
-            # this might be a wild guess, but if it's a number, use a number
-            push @{ $data->{commands}->[0]->{arguments} }, int $aArguments[$i];
-            # temperatures don't like a unit when being set - skip it
-            if( $i < $#aArguments ){
-                $i++ if $aArguments[$i+1] =~ m/^[FC]$/i;
+            if( $capability =~ m/coolingSetpoint/i or $command =~ m/coolingSetpoint/i ){
+                # if it looks like a number and we expect a number - send a number
+                push @{ $data->{commands}->[0]->{arguments} }, int $aArguments[$i];
+
+                # temperatures don't like a unit when being set - skip it
+                if( $i < $#aArguments ){
+                    $i++ if $aArguments[$i+1] =~ m/^[FC]$/i;
+                }
             }
         }elsif( $aArguments[$i] =~ m/^On$|^Off$/ ){
             # and force lowercase On/Off command
