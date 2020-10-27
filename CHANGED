@@ -1,4 +1,8 @@
 FHEM module SST last 3 changes:
+2020-10-27: Version 0.7.21
+ - feature: extended known options list
+ - bugfix: changed general default for discard_units to 1
+ - bugfix: not all numbers are numbers on set commands
 2020-10-26: Version 0.7.20
  - feature: predefined ranges for fridge/freezer temperatues
  - bugfix: sorting setList_hint (changing order randomly)
@@ -15,9 +19,3 @@ FHEM module SST last 3 changes:
  - fixed markup-typo in inline help
  - args
  - changed order of files
-2020-10-03: Version 0.7.18
- - removed device dependent predefines for discard_units ans setList
- - added icon for SmartThings cloud
- - fixed icon properties
- - added new icons for SmartThings and TVs
- - removal of temperature unit on setting
