@@ -1,6 +1,6 @@
 ################################################################################
 # 48_SST.pm
-#   Version 0.7.20 (2020-10-26)
+#   Version 0.7.21 (2020-10-27)
 #
 # SYNOPSIS
 #   Samsung SmartThings Connecton Module for FHEM
@@ -109,8 +109,10 @@ sub SST_Define($$) {
         'washer' => {
             'icon' => 'scene_washing_machine',
             'stateFormat' => 'machineState<br>washerJobState',
-            #'readings_map' => 'washerCycle:Table_00_Course_5B=Baumwolle,Table_00_Course_65=Wolle,Table_00_Course_5C=Schnelle_Wäsche,Table_00_Course_63=Trommelreinigung,Table_00_Course_67=Synthetik',
             'readings_map' => 'washerCycle:Table_00_Course_5B=Baumwolle,Table_00_Course_5C=Schnelle_Wäsche,Table_00_Course_63=Trommelreinigung,Table_00_Course_65=Wolle,Table_00_Course_67=Synthetik,Table_02_Course_1B=Baumwolle,Table_02_Course_1C=ECO_40-60,Table_02_Course_1D=SuperSpeed,Table_02_Course_1E=Schnelle_Wäsche,Table_02_Course_1F=Kaltwäsche_Intensiv,Table_02_Course_20=Hygiene-Dampf,Table_02_Course_21=Buntwäsche,Table_02_Course_22=Wolle,Table_02_Course_23=Outdoor,Table_02_Course_24=XXL-Wäsche,Table_02_Course_25=Pflegeleicht,Table_02_Course_26=Feinwäsche,Table_02_Course_27=Spülen+Schleudern,Table_02_Course_28=Abpumpen+Schleudern,Table_02_Course_29=Trommelreinigung+,Table_02_Course_2A=Jeans,Table_02_Course_2D=Super_Leise,Table_02_Course_2E=Baby_Care_Intensiv,Table_02_Course_2F=Sportkleidung,Table_02_Course_30=Bewölkter_Tag,Table_02_Course_32=Hemden,Table_02_Course_33=Handtücher',
+            #'readings_map' => 'washerCycle:DUMMY=DUMMY',
+            #'readings_map' => 'washerCycle:5B=Baumwolle,5C=Schnelle_Wäsche,63=Trommelreinigung,65=Wolle,67=Synthetik',
+            #'readings_map' => 'washerCycle:1B=Baumwolle,1C=ECO_40-60,1D=SuperSpeed,1E=Schnelle_Wäsche,1F=Kaltwäsche_Intensiv,20=Hygiene-Dampf,21=Buntwäsche,22=Wolle,23=Outdoor,24=XXL-Wäsche,25=Pflegeleicht,26=Feinwäsche,27=Spülen+Schleudern,28=Abpumpen+Schleudern,29=Trommelreinigung+,2A=Jeans,2D=Super_Leise,2E=Baby_Care_Intensiv,2F=Sportkleidung,30=Bewölkter_Tag,32=Hemden,33=Handtücher',
         },
         'tv' => {
             'icon' => 'samsung_tv',
@@ -701,9 +703,14 @@ sub SST_getDeviceStatus($$) {
         }
     }
 
+    # ENTRYPOINT new options
     my %setpointrange = ();
     my %option2reading = {
         'custom.airConditionerOptionalMode' => 'acOptionalMode',
+        #'custom.supportedOptions' => 'washerCycle',
+        'custom.washerRinseCycles' => 'washerRinseCycles',
+        'custom.washerSpinLevel' => 'washerSpinLevel',
+        'custom.washerWaterTemperature' => 'washerWaterTemperature',
     };
 
     # parse JSON struct
