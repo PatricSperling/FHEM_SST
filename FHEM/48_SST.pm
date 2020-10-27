@@ -1,6 +1,6 @@
 ################################################################################
 # 48_SST.pm
-#   Version 0.7.21 (2020-10-27)
+#   Version 0.7.22 (2020-10-27)
 #
 # SYNOPSIS
 #   Samsung SmartThings Connecton Module for FHEM
@@ -725,6 +725,15 @@ sub SST_getDeviceStatus($$) {
                 #Log3 $hash, 5, "SST ($device): get $modus - parsing component: $component";
 
                 if( $capability eq 'execute' ){
+                    foreach my $collection ( keys %{ $jsonhash->{$baselevel}->{$component}->{execute}->{data}->{value}->{payload} } ){
+                        if( $collection =~ m/options$/ ){
+                            foreach my $set ( @{ $jsonhash->{$baselevel}->{$component}->{execute}->{data}->{value}->{payload}->{$collection} } ){
+                                my ( $exkey, $exval ) = split /_/, $set;
+                                my $reading = makeReadingName( $component . '_execute-payload_option-' . $exkey );
+                                $readings{$reading} = $exval;
+                            }
+                        }
+                    }
                     # we currently don't want readings for commands
                     next;
                 }elsif( $capability =~ m/^custom.disabledC/ ){ # custom.disabledCapabilities / custom.disabledComponents
@@ -740,8 +749,8 @@ sub SST_getDeviceStatus($$) {
                 }
 
                 if( ref $jsonhash->{$baselevel}->{$component}->{$capability} eq 'HASH' ){
-                    foreach my $module ( sort keys %{ $jsonhash->{$baselevel}->{$component}->{$capability} } ){
-                        #Log3 $hash, 5, "SST ($device): get $modus - parsing module: $module";
+                    foreach my $module ( keys %{ $jsonhash->{$baselevel}->{$component}->{$capability} } ){
+                        #Log3 $hash, 5, "SST ($device): get $modus - parsing module: $module in $capability in $component in $baselevel";
                         if( ref $jsonhash->{$baselevel}->{$component}->{$capability}->{$module} eq 'HASH' ){
                             if( defined $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} ){
                                 if( $component eq 'main' and $capability eq 'ocf' ){
