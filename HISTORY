@@ -1,4 +1,6 @@
-2020-10-27 18:45:50 +0100 Version 0.7.21
+2020-10-27 21:03:40 +0100 Version 0.7.22
+2020-10-27 21:02:29 +0100 feature: showing data from execute-options as readings
+2020-10-27 18:45:58 +0100 Version 0.7.21
 2020-10-27 18:45:10 +0100 feature: extended known options list
 2020-10-27 17:59:07 +0100 bugfix: changed general default for discard_units to 1
 2020-10-27 17:57:34 +0100 bugfix: not all numbers are numbers on set commands

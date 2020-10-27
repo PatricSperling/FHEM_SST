@@ -1,4 +1,6 @@
 FHEM module SST last 3 changes:
+2020-10-27: Version 0.7.22
+ - feature: showing data from execute-options as readings
 2020-10-27: Version 0.7.21
  - feature: extended known options list
  - bugfix: changed general default for discard_units to 1
@@ -8,14 +10,3 @@ FHEM module SST last 3 changes:
  - bugfix: sorting setList_hint (changing order randomly)
  - feature: enhanced default values
  - feature: heed readings_map on get x_options
-2020-10-20: Version 0.7.19
- - bugfix: auto identification of options
- - bugfix: skipping disabled components
- - feature: added attribute readings_map
- - bugfix: timestamp correction when milliseconds are missing
- - bugfix: removed log messages on bare units
- - fixed inline documentation issues
- - reviewed internal documentation
- - fixed markup-typo in inline help
- - args
- - changed order of files
