@@ -1,6 +1,6 @@
 ################################################################################
 # 48_SST.pm
-#   Version 0.7.22 (2020-10-27)
+#   Version 0.7.23 (2020-10-30)
 #
 # SYNOPSIS
 #   Samsung SmartThings Connecton Module for FHEM
@@ -197,9 +197,9 @@ sub SST_Attribute($$) {
             # restart/update polling
             SST_ProcessTimer($hash);
         }
-    }elsif( $attribute =~ m/^(.*)_class$/ ){
+    }elsif( $attribute eq 'readings_map_class' ){
         # some class changed - reset corresponding default
-        SST_setDefaults( $device, $1 );
+        SST_setDefaults( $device, 'readings_map' );
     }
     return;
 }
@@ -448,7 +448,6 @@ sub SST_Set($@) {
 # set device specific default values
 sub SST_setDefaults($$) {
     my ($device, $scope) = @_;
-    Log3 $device, 3, "SST_setDefaults ($device, $scope)";
     my $devicetype = lc( $attr{$device}{device_type} );
 
     # ENTRYPOINT new device types (3/4)
@@ -495,9 +494,7 @@ sub SST_setDefaults($$) {
         }
     };
 
-Log3 $device, 3, "SST_setDefaults ($device, $scope): los geht's";
     if( $scope eq 'ALL' ){
-Log3 $device, 3, "SST_setDefaults ($device, $scope): alle setzen";
         foreach my $key ( keys %{ $predefines->{$devicetype} } ){
             if( $key =~ m/^(.*):LIST$/ ){
                 my $realattr = $1;
@@ -514,10 +511,8 @@ Log3 $device, 3, "SST_setDefaults ($device, $scope): alle setzen";
         $attr{$device}{icon} = 'unknown' unless defined $attr{$device}{icon};
     }elsif( defined $predefines->{$devicetype}->{$scope.':LIST'} ){
         my $key = $scope . ':LIST';
-Log3 $device, 3, "SST_setDefaults ($device, $scope): scope defined: $key";
         if( defined $predefines->{$devicetype}->{$key} ){
             my $realkey  = $scope . ':' . $attr{$device}{ $predefines->{$devicetype}->{$key} };
-Log3 $device, 3, "SST_setDefaults ($device, $scope): key defined: $realkey";
             if( defined $predefines->{$devicetype}->{$realkey} ){
                 $attr{$device}{$scope} = $predefines->{$devicetype}->{$realkey}
             }elsif( defined $predefines->{$devicetype}->{$scope} ){
@@ -525,13 +520,10 @@ Log3 $device, 3, "SST_setDefaults ($device, $scope): key defined: $realkey";
             }
         }
     }elsif( defined $predefines->{$devicetype}->{$scope} ){
-Log3 $device, 3, "SST_setDefaults ($device, $scope): $scope setzen";
         $attr{$device}{$scope} = $predefines->{$devicetype}->{$scope} if defined $predefines->{$devicetype}->{$scope};
     }elsif( $scope eq 'icon' ){
-Log3 $device, 3, "SST_setDefaults ($device, $scope): icon setzen";
         $attr{$device}{icon} = 'unknown' unless defined $attr{$device}{icon};
     }else{
-Log3 $device, 3, "SST_setDefaults ($device, $scope): fallback";
         return "No default predefined for attribute $scope in device type " . $attr{$device}{device_type} . '.';
     }
     return;
@@ -551,11 +543,13 @@ sub SST_Get($@) {
         return SST_getDeviceDetection($hash->{NAME} );
     }elsif( $command eq 'status' or $command eq 'x_options' ){
         return SST_getDeviceStatus( $hash->{NAME}, $command );
+    }elsif( $command eq 'x_default' ){
+        return SST_setDefaults( $hash->{NAME}, $aArguments[0] );
     }else{
         if( AttrVal( $device, 'device_type', 'CONNECTOR' ) eq 'CONNECTOR' ){
             return "Unknown argument $command, choose one of device_list:noArg";
         }else{
-            return "Unknown argument $command, choose one of status:noArg x_options:noArg";
+            return "Unknown argument $command, choose one of status:noArg x_options:noArg x_default:ALL,icon,stateFormat,setList_static,readings_map,devStateIcon,cmdIcon";
         }
     }
 }
@@ -1083,6 +1077,14 @@ sub SST_getDeviceStatus($$) {
     of available/useful SmartThings capabilities in the readings. The readings
     may differ greatly between different types of devices.<br></li>
 
+    <a name="x_default"></a>
+    <li>x_default<br>
+    This is not available for the connector device and will overwrite the
+    selected attribute with the corresponding SST default. Please note that
+    this is NOT taken from the cloud, but merely the hard coded default.<br>
+    In order to display the changes, the FHEMWEB page needs to be reloaded.<br>
+    </li>
+
     <a name="x_options"></a>
     <li>x_options<br>
     This is not available for the connector device and will overwrite the
@@ -1198,6 +1200,13 @@ sub SST_getDeviceStatus($$) {
     readings and the set commands can be translated into something useful.<br>
     The format is:<br>
     <code>Reading:Value=Display[,Value=Display]</code><br></li>
+
+    <a name="readings_map_class"></a>
+    <li>readings_map_class<br>
+    Not valid for connector device.<br>
+    This attribute is used to differ between different command options for
+    devices of the same type. Currently this is only used for washing
+    machines.<br></li>
 
     <a name="setList"></a>
     <li>setList<br>
@@ -1325,6 +1334,14 @@ sub SST_getDeviceStatus($$) {
     <a name="x_options"></a>
     <li>x_options<br>
     Diese Funktion steht beim Connector nicht zur Verf&uuml;gung.<br>
+    Hier&uuml;ber kann der hart im Modulcode hinterlegte Defaultwert f&uuml;r
+    das angegebene Attribut gesetzt werden.<br>
+    Um die &auml;nderungen anzuzeigen, mu&szlig; die Seite in FHEMWEB neu
+    geladen werden.<br></li>
+
+    <a name="x_options"></a>
+    <li>x_options<br>
+    Diese Funktion steht beim Connector nicht zur Verf&uuml;gung.<br>
     Hier&uuml;ber wird eine Liste m&ouml;glicher Kommandos aus dem
     Ger&auml;testatus der Cloud erzeugt und in dem Attribut setList
     gespeichert.<br>
@@ -1444,6 +1461,13 @@ sub SST_getDeviceStatus($$) {
     werden.<br>
     Das Format ist:<br>
     <code>Reading:Value=Display[,Value=Display]</code><br></li>
+
+    <a name="readings_map_class"></a>
+    <li>readings_map_class<br>
+    F&uuml;r den Connector irrelevant.<br>
+    Mit diesem Wert kann zwischen verschiedenen Ger&auml;tetypen der selben
+    Ger&auml;teklasse unterschieden werden (derzeit nur f&uuml;r
+    Waschmaschienen).<br></li>
 
     <a name="setList"></a>
     <li>setList<br>
