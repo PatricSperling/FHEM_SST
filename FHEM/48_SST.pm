@@ -60,7 +60,7 @@ sub SST_Initialize($) {
         'confirmation_delay',
         'device_id',
         'device_name',
-        'device_type:CONNECTOR,refrigerator,freezer,TV,washer,dryer,vacuumCleaner,room_a_c',
+        'device_type:CONNECTOR,refrigerator,freezer,TV,washer,dryer,vacuumCleaner,room_a_c,switch',
         'disable:1,0',
         'discard_units:1,0',
         'get_timeout',
@@ -93,7 +93,7 @@ sub SST_Define($$) {
 
     # ENTRYPOINT new device types (3/4)
     my $predefines = {
-        'CONNECTOR' => {
+        'connector' => {
             'icon' => 'samsung_smartthings',
         },
         'refrigerator' => {
@@ -105,6 +105,8 @@ sub SST_Define($$) {
             'stateFormat' => 'airConditionerMode',
             'setList_static' => 'fanOscillationMode:all,fixed,horizontal,vertical',
             'readings_map' => 'switch:on=an,off=aus',
+            'devStateIcon' => 'on:ios-on-green:off off:ios-off:on',
+            'cmdIcon' => 'on:rc_BLANK off:rc_BLANK2',
         },
         'washer' => {
             'icon' => 'scene_washing_machine',
@@ -113,10 +115,20 @@ sub SST_Define($$) {
             #'readings_map' => 'washerCycle:DUMMY=DUMMY',
             #'readings_map' => 'washerCycle:5B=Baumwolle,5C=Schnelle_Wäsche,63=Trommelreinigung,65=Wolle,67=Synthetik',
             #'readings_map' => 'washerCycle:1B=Baumwolle,1C=ECO_40-60,1D=SuperSpeed,1E=Schnelle_Wäsche,1F=Kaltwäsche_Intensiv,20=Hygiene-Dampf,21=Buntwäsche,22=Wolle,23=Outdoor,24=XXL-Wäsche,25=Pflegeleicht,26=Feinwäsche,27=Spülen+Schleudern,28=Abpumpen+Schleudern,29=Trommelreinigung+,2A=Jeans,2D=Super_Leise,2E=Baby_Care_Intensiv,2F=Sportkleidung,30=Bewölkter_Tag,32=Hemden,33=Handtücher',
+            'devStateIcon' => 'on:ios-on-green:off off:ios-off:on',
+            'cmdIcon' => 'on:rc_BLANK off:rc_BLANK2',
+        },
+        'switch' => {
+            'icon' => 'ios-NACK',
+            'stateFormat' => 'switch',
+            'devStateIcon' => 'on:ios-on-green:off off:ios-off:on',
+            'cmdIcon' => 'on:rc_BLANK off:rc_BLANK2',
         },
         'tv' => {
             'icon' => 'samsung_tv',
-            'stateFormat' => 'switch<br>tvChannel',
+            'stateFormat' => 'switch',
+            'devStateIcon' => 'on:ios-on-green:off off:ios-off:on',
+            'cmdIcon' => 'on:rc_BLANK off:rc_BLANK2',
         },
         'vacuumCleaner' => {
             'icon' => 'vacuum_top',
@@ -172,13 +184,6 @@ sub SST_Define($$) {
     # make sure we have a device type
     $attr{$aArguments[0]}{device_type} = 'CONNECTOR' if $attr{$aArguments[0]}{device_type} eq '';
 
-    # if we're in a redefine, don't set any defaults
-    if( not defined $hash->{TOKEN} and not defined $attr{$aArguments[0]}{device_id} ){
-        # differ device types
-        if( $attr{$aArguments[0]}{device_type} eq 'CONNECTOR' ){
-        }else{
-        }
-    }
     # differ device types
     my $redefine = 1;
     if( $attr{$aArguments[0]}{device_type} eq 'CONNECTOR' ){
@@ -610,6 +615,8 @@ sub SST_getDeviceDetection($) {
                     $subdevicetype = $1;
                 }elsif( $items->{items}[$i]->{deviceTypeName} =~ m/TV/ ){
                     $subdevicetype = 'TV';
+                }elsif( $items->{items}[$i]->{deviceTypeName} =~ m/switch/ ){
+                    $subdevicetype = 'switch';
                 }else{
                     $msg .= 'cannot determine device type from name (' . $items->{items}[$i]->{name} . ') or deviceTypeName (' . $items->{items}[$i]->{deviceTypeName} . ').';
                     Log3 $hash, 2, "SST ($device): get device_list - cannot determine device type from name (" . $items->{items}[$i]->{name} . ') or deviceTypeName (' . $items->{items}[$i]->{deviceTypeName} . ').';
