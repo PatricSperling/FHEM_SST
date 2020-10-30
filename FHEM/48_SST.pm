@@ -69,7 +69,8 @@ sub SST_Initialize($) {
         'readings_map',
         'setList',
         'setList_static',
-        'set_timeout'
+        'set_timeout',
+        'readings_map_class:Table_00_Course_,Table_02_Course_',
     );
     $hash->{AttrList} = join(" ", @attrList)." ".$readingFnAttributes;
 }
@@ -90,50 +91,6 @@ sub SST_Define($$) {
     $hash->{name}     = $aArguments[0];
     $attr{$aArguments[0]}{device_type} = '';
     $attr{$aArguments[0]}{IODev}       = '';
-
-    # ENTRYPOINT new device types (3/4)
-    my $predefines = {
-        'connector' => {
-            'icon' => 'samsung_smartthings',
-        },
-        'refrigerator' => {
-            'icon' => 'samsung_sidebyside',
-            'stateFormat' => 'cooler_temperature °C (cooler_contact)<br>\nfreezer_temperature °C (freezer_contact)',
-        },
-        'room_a_c' => {
-            'icon' => 'samsung_ac',
-            'stateFormat' => 'airConditionerMode',
-            'setList_static' => 'fanOscillationMode:all,fixed,horizontal,vertical',
-            'readings_map' => 'switch:on=an,off=aus',
-            'devStateIcon' => 'on:ios-on-green:off off:ios-off:on',
-            'cmdIcon' => 'on:rc_BLANK off:rc_BLANK2',
-        },
-        'washer' => {
-            'icon' => 'scene_washing_machine',
-            'stateFormat' => 'machineState<br>washerJobState',
-            'readings_map' => 'washerCycle:Table_00_Course_5B=Baumwolle,Table_00_Course_5C=Schnelle_Wäsche,Table_00_Course_63=Trommelreinigung,Table_00_Course_65=Wolle,Table_00_Course_67=Synthetik,Table_02_Course_1B=Baumwolle,Table_02_Course_1C=ECO_40-60,Table_02_Course_1D=SuperSpeed,Table_02_Course_1E=Schnelle_Wäsche,Table_02_Course_1F=Kaltwäsche_Intensiv,Table_02_Course_20=Hygiene-Dampf,Table_02_Course_21=Buntwäsche,Table_02_Course_22=Wolle,Table_02_Course_23=Outdoor,Table_02_Course_24=XXL-Wäsche,Table_02_Course_25=Pflegeleicht,Table_02_Course_26=Feinwäsche,Table_02_Course_27=Spülen+Schleudern,Table_02_Course_28=Abpumpen+Schleudern,Table_02_Course_29=Trommelreinigung+,Table_02_Course_2A=Jeans,Table_02_Course_2D=Super_Leise,Table_02_Course_2E=Baby_Care_Intensiv,Table_02_Course_2F=Sportkleidung,Table_02_Course_30=Bewölkter_Tag,Table_02_Course_32=Hemden,Table_02_Course_33=Handtücher',
-            #'readings_map' => 'washerCycle:DUMMY=DUMMY',
-            #'readings_map' => 'washerCycle:5B=Baumwolle,5C=Schnelle_Wäsche,63=Trommelreinigung,65=Wolle,67=Synthetik',
-            #'readings_map' => 'washerCycle:1B=Baumwolle,1C=ECO_40-60,1D=SuperSpeed,1E=Schnelle_Wäsche,1F=Kaltwäsche_Intensiv,20=Hygiene-Dampf,21=Buntwäsche,22=Wolle,23=Outdoor,24=XXL-Wäsche,25=Pflegeleicht,26=Feinwäsche,27=Spülen+Schleudern,28=Abpumpen+Schleudern,29=Trommelreinigung+,2A=Jeans,2D=Super_Leise,2E=Baby_Care_Intensiv,2F=Sportkleidung,30=Bewölkter_Tag,32=Hemden,33=Handtücher',
-            'devStateIcon' => 'on:ios-on-green:off off:ios-off:on',
-            'cmdIcon' => 'on:rc_BLANK off:rc_BLANK2',
-        },
-        'switch' => {
-            'icon' => 'ios-NACK',
-            'stateFormat' => 'switch',
-            'devStateIcon' => 'on:ios-on-green:off off:ios-off:on',
-            'cmdIcon' => 'on:rc_BLANK off:rc_BLANK2',
-        },
-        'tv' => {
-            'icon' => 'samsung_tv',
-            'stateFormat' => 'switch',
-            'devStateIcon' => 'on:ios-on-green:off off:ios-off:on',
-            'cmdIcon' => 'on:rc_BLANK off:rc_BLANK2',
-        },
-        'vacuumCleaner' => {
-            'icon' => 'vacuum_top',
-        }
-    };
 
     # on more attributes - analyze and act correctly
     my $index = 2;
@@ -205,13 +162,7 @@ sub SST_Define($$) {
             $redefine = 0;
         }
     }
-    unless( $redefine ){
-        # set specific defaults
-        foreach ( keys %{ $predefines->{ lc( $attr{$aArguments[0]}{device_type} ) } } ){
-            $attr{$aArguments[0]}{$_} = $predefines->{ $attr{$aArguments[0]}{device_type} }->{$_};
-        }
-        $attr{$aArguments[0]}{icon} = 'unknown' unless defined $attr{$aArguments[0]}{icon};
-    }
+    SST_setDefaults( $aArguments[0], 'ALL' ) unless $redefine;
 
     Log3 $aArguments[0], 3, "SST ($aArguments[0]): define - $attr{$aArguments[0]}{device_type} defined as $aArguments[0]";
 
@@ -246,8 +197,11 @@ sub SST_Attribute($$) {
             # restart/update polling
             SST_ProcessTimer($hash);
         }
+    }elsif( $attribute =~ m/^(.*)_class$/ ){
+        # some class changed - reset corresponding default
+        SST_setDefaults( $device, $1 );
     }
-    return undef;
+    return;
 }
 
 #####################################
@@ -315,29 +269,6 @@ sub SST_Undefine($$) {
         Log3 $hash, 3, "SST ($device): delete - reset reading in connector $connector";
     }
     return undef;
-}
-
-#####################################
-# GET COMMAND
-sub SST_Get($@) {
-    my ($hash, @aArguments) = @_;
-    return '"get $hash->{name}" needs at least one argument' if int(@aArguments) < 2;
-    my $device  = shift @aArguments;
-    my $command = shift @aArguments;
-    Log3 $hash, 5, "SST ($device): get command - received $command";
-
-    # differ on specific get command
-    if( $command eq 'device_list' ){
-        return SST_getDeviceDetection($hash->{NAME} );
-    }elsif( $command eq 'status' or $command eq 'x_options' ){
-        return SST_getDeviceStatus( $hash->{NAME}, $command );
-    }else{
-        if( AttrVal( $device, 'device_type', 'CONNECTOR' ) eq 'CONNECTOR' ){
-            return "Unknown argument $command, choose one of device_list:noArg";
-        }else{
-            return "Unknown argument $command, choose one of status:noArg x_options:noArg";
-        }
-    }
 }
 
 #####################################
@@ -514,6 +445,122 @@ sub SST_Set($@) {
 }
 
 #####################################
+# set device specific default values
+sub SST_setDefaults($$) {
+    my ($device, $scope) = @_;
+    Log3 $device, 3, "SST_setDefaults ($device, $scope)";
+    my $devicetype = lc( $attr{$device}{device_type} );
+
+    # ENTRYPOINT new device types (3/4)
+    my $predefines = {
+        'connector' => {
+            'icon' => 'samsung_smartthings',
+        },
+        'refrigerator' => {
+            'icon' => 'samsung_sidebyside',
+            'stateFormat' => 'cooler_temperature °C (cooler_contact)<br>\nfreezer_temperature °C (freezer_contact)',
+        },
+        'room_a_c' => {
+            'icon' => 'samsung_ac',
+            'stateFormat' => 'airConditionerMode',
+            'setList_static' => 'fanOscillationMode:all,fixed,horizontal,vertical',
+            'readings_map' => 'switch:on=an,off=aus',
+            'devStateIcon' => 'on:ios-on-green:off off:ios-off:on',
+            'cmdIcon' => 'on:rc_BLANK off:rc_BLANK2',
+        },
+        'washer' => {
+            'icon' => 'scene_washing_machine',
+            'stateFormat' => 'machineState<br>washerJobState',
+            #'readings_map' => 'washerCycle:Table_00_Course_5B=Baumwolle,Table_00_Course_5C=Schnelle_Wäsche,Table_00_Course_63=Trommelreinigung,Table_00_Course_65=Wolle,Table_00_Course_67=Synthetik,Table_02_Course_1B=Baumwolle,Table_02_Course_1C=ECO_40-60,Table_02_Course_1D=SuperSpeed,Table_02_Course_1E=Schnelle_Wäsche,Table_02_Course_1F=Kaltwäsche_Intensiv,Table_02_Course_20=Hygiene-Dampf,Table_02_Course_21=Buntwäsche,Table_02_Course_22=Wolle,Table_02_Course_23=Outdoor,Table_02_Course_24=XXL-Wäsche,Table_02_Course_25=Pflegeleicht,Table_02_Course_26=Feinwäsche,Table_02_Course_27=Spülen+Schleudern,Table_02_Course_28=Abpumpen+Schleudern,Table_02_Course_29=Trommelreinigung+,Table_02_Course_2A=Jeans,Table_02_Course_2D=Super_Leise,Table_02_Course_2E=Baby_Care_Intensiv,Table_02_Course_2F=Sportkleidung,Table_02_Course_30=Bewölkter_Tag,Table_02_Course_32=Hemden,Table_02_Course_33=Handtücher',
+            'readings_map:LIST' => 'readings_map_class',
+            'readings_map:Table_00_Course_' => 'washerCycle:5B=Baumwolle,5C=Schnelle_Wäsche,63=Trommelreinigung,65=Wolle,67=Synthetik',
+            'readings_map:Table_02_Course_' => 'washerCycle:1B=Baumwolle,1C=ECO_40-60,1D=SuperSpeed,1E=Schnelle_Wäsche,1F=Kaltwäsche_Intensiv,20=Hygiene-Dampf,21=Buntwäsche,22=Wolle,23=Outdoor,24=XXL-Wäsche,25=Pflegeleicht,26=Feinwäsche,27=Spülen+Schleudern,28=Abpumpen+Schleudern,29=Trommelreinigung+,2A=Jeans,2D=Super_Leise,2E=Baby_Care_Intensiv,2F=Sportkleidung,30=Bewölkter_Tag,32=Hemden,33=Handtücher',
+            'devStateIcon' => 'on:ios-on-green:off off:ios-off:on',
+            'cmdIcon' => 'on:rc_BLANK off:rc_BLANK2',
+        },
+        'switch' => {
+            'icon' => 'ios-NACK',
+            'stateFormat' => 'switch',
+            'devStateIcon' => 'on:ios-on-green:off off:ios-off:on',
+            'cmdIcon' => 'on:rc_BLANK off:rc_BLANK2',
+        },
+        'tv' => {
+            'icon' => 'samsung_tv',
+            'stateFormat' => 'switch',
+            'devStateIcon' => 'on:ios-on-green:off off:ios-off:on',
+            'cmdIcon' => 'on:rc_BLANK off:rc_BLANK2',
+        },
+        'vacuumCleaner' => {
+            'icon' => 'vacuum_top',
+        }
+    };
+
+Log3 $device, 3, "SST_setDefaults ($device, $scope): los geht's";
+    if( $scope eq 'ALL' ){
+Log3 $device, 3, "SST_setDefaults ($device, $scope): alle setzen";
+        foreach my $key ( keys %{ $predefines->{$devicetype} } ){
+            if( $key =~ m/^(.*):LIST$/ ){
+                my $realattr = $1;
+                my $realkey  = $realattr . ':' . $attr{$device}{ $predefines->{$devicetype}->{$key} };
+                if( defined $predefines->{$devicetype}->{$realkey} ){
+                    $attr{$device}{$realattr} = $predefines->{$devicetype}->{$realkey}
+                }
+            }elsif( $key =~ m/:/ ){
+                next;
+            }else{
+                $attr{$device}{$key} = $predefines->{$devicetype}->{$key};
+            }
+        }
+        $attr{$device}{icon} = 'unknown' unless defined $attr{$device}{icon};
+    }elsif( defined $predefines->{$devicetype}->{$scope.':LIST'} ){
+        my $key = $scope . ':LIST';
+Log3 $device, 3, "SST_setDefaults ($device, $scope): scope defined: $key";
+        if( defined $predefines->{$devicetype}->{$key} ){
+            my $realkey  = $scope . ':' . $attr{$device}{ $predefines->{$devicetype}->{$key} };
+Log3 $device, 3, "SST_setDefaults ($device, $scope): key defined: $realkey";
+            if( defined $predefines->{$devicetype}->{$realkey} ){
+                $attr{$device}{$scope} = $predefines->{$devicetype}->{$realkey}
+            }elsif( defined $predefines->{$devicetype}->{$scope} ){
+                $attr{$device}{$scope} = $predefines->{$devicetype}->{$scope};
+            }
+        }
+    }elsif( defined $predefines->{$devicetype}->{$scope} ){
+Log3 $device, 3, "SST_setDefaults ($device, $scope): $scope setzen";
+        $attr{$device}{$scope} = $predefines->{$devicetype}->{$scope} if defined $predefines->{$devicetype}->{$scope};
+    }elsif( $scope eq 'icon' ){
+Log3 $device, 3, "SST_setDefaults ($device, $scope): icon setzen";
+        $attr{$device}{icon} = 'unknown' unless defined $attr{$device}{icon};
+    }else{
+Log3 $device, 3, "SST_setDefaults ($device, $scope): fallback";
+        return "No default predefined for attribute $scope in device type " . $attr{$device}{device_type} . '.';
+    }
+    return;
+}
+
+#####################################
+# GET COMMAND
+sub SST_Get($@) {
+    my ($hash, @aArguments) = @_;
+    return '"get $hash->{name}" needs at least one argument' if int(@aArguments) < 2;
+    my $device  = shift @aArguments;
+    my $command = shift @aArguments;
+    Log3 $hash, 5, "SST ($device): get command - received $command";
+
+    # differ on specific get command
+    if( $command eq 'device_list' ){
+        return SST_getDeviceDetection($hash->{NAME} );
+    }elsif( $command eq 'status' or $command eq 'x_options' ){
+        return SST_getDeviceStatus( $hash->{NAME}, $command );
+    }else{
+        if( AttrVal( $device, 'device_type', 'CONNECTOR' ) eq 'CONNECTOR' ){
+            return "Unknown argument $command, choose one of device_list:noArg";
+        }else{
+            return "Unknown argument $command, choose one of status:noArg x_options:noArg";
+        }
+    }
+}
+
+#####################################
 # device listing/creation
 sub SST_getDeviceDetection($) {
     my ($device) = @_;
@@ -657,6 +704,7 @@ sub SST_getDeviceStatus($$) {
     my ($device, $modus) = @_;
     my $hash             = $defs{$device};
     my $device_type      = AttrVal($device, 'device_type', 'CONNECTOR');
+    my $device_id        = AttrVal($device, 'device_id', undef);
     my $nounits          = AttrNum($device, 'discard_units', 1);
     my $token            = undef;
     return "Cannot get $modus for the CONNECTOR device." if $device_type eq 'CONNECTOR';
@@ -664,11 +712,12 @@ sub SST_getDeviceStatus($$) {
     return "Could not identify IO Device for $device - please check configuration." unless $connector;
     $token = InternalVal( $connector, 'TOKEN', undef );
     return "Could not identify Samsung SmartThings token for $device - please check configuration." unless $token;
+    return "Could not identify Samsung SmartThings device ID for $device - please check configuration." unless $device_id;
 
     # poll cloud for all status objects (all components)
     Log3 $hash, 4, "SST ($device): get $modus - query cloud service";
     my $webget   = HTTP::Request->new('GET', 
-        'https://api.smartthings.com/v1/devices/' . AttrVal($device, 'device_id', undef) . '/status',
+        'https://api.smartthings.com/v1/devices/' . $device_id . '/status',
         ['Authorization' => "Bearer: $token"]
     );
     my $webagent = LWP::UserAgent->new( timeout => AttrNum($device, 'get_timeout', 10) );
@@ -958,7 +1007,7 @@ sub SST_getDeviceStatus($$) {
     }
 
     return Dumper($jsonhash) if AttrNum($device, 'verbose', 0) >= 5;
-    return undef;
+    return;
 }
 
 1;
