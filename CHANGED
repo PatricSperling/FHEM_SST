@@ -1,12 +1,11 @@
 FHEM module SST last 3 changes:
+2020-10-30: Version 0.7.23
+ - feature: added get x_default
+ - feature: added readings_map_class
+ - feature: added device type switch
 2020-10-27: Version 0.7.22
  - feature: showing data from execute-options as readings
 2020-10-27: Version 0.7.21
  - feature: extended known options list
  - bugfix: changed general default for discard_units to 1
  - bugfix: not all numbers are numbers on set commands
-2020-10-26: Version 0.7.20
- - feature: predefined ranges for fridge/freezer temperatues
- - bugfix: sorting setList_hint (changing order randomly)
- - feature: enhanced default values
- - feature: heed readings_map on get x_options

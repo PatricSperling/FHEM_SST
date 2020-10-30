@@ -1,4 +1,8 @@
-2020-10-27 21:03:40 +0100 Version 0.7.22
+2020-10-30 21:34:26 +0100 Version 0.7.23
+2020-10-30 21:33:03 +0100 feature: added get x_default
+2020-10-30 21:11:07 +0100 feature: added readings_map_class
+2020-10-30 16:47:18 +0100 feature: added device type switch
+2020-10-27 21:03:46 +0100 Version 0.7.22
 2020-10-27 21:02:29 +0100 feature: showing data from execute-options as readings
 2020-10-27 18:45:58 +0100 Version 0.7.21
 2020-10-27 18:45:10 +0100 feature: extended known options list
