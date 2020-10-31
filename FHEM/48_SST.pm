@@ -470,7 +470,6 @@ sub SST_setDefaults($$) {
         'washer' => {
             'icon' => 'scene_washing_machine',
             'stateFormat' => 'machineState<br>washerJobState',
-            #'readings_map' => 'washerCycle:Table_00_Course_5B=Baumwolle,Table_00_Course_5C=Schnelle_Wäsche,Table_00_Course_63=Trommelreinigung,Table_00_Course_65=Wolle,Table_00_Course_67=Synthetik,Table_02_Course_1B=Baumwolle,Table_02_Course_1C=ECO_40-60,Table_02_Course_1D=SuperSpeed,Table_02_Course_1E=Schnelle_Wäsche,Table_02_Course_1F=Kaltwäsche_Intensiv,Table_02_Course_20=Hygiene-Dampf,Table_02_Course_21=Buntwäsche,Table_02_Course_22=Wolle,Table_02_Course_23=Outdoor,Table_02_Course_24=XXL-Wäsche,Table_02_Course_25=Pflegeleicht,Table_02_Course_26=Feinwäsche,Table_02_Course_27=Spülen+Schleudern,Table_02_Course_28=Abpumpen+Schleudern,Table_02_Course_29=Trommelreinigung+,Table_02_Course_2A=Jeans,Table_02_Course_2D=Super_Leise,Table_02_Course_2E=Baby_Care_Intensiv,Table_02_Course_2F=Sportkleidung,Table_02_Course_30=Bewölkter_Tag,Table_02_Course_32=Hemden,Table_02_Course_33=Handtücher',
             'readings_map:LIST' => 'readings_map_class',
             'readings_map:Table_00_Course_' => 'washerCycle:5B=Baumwolle,5C=Schnelle_Wäsche,63=Trommelreinigung,65=Wolle,67=Synthetik',
             'readings_map:Table_02_Course_' => 'washerCycle:1B=Baumwolle,1C=ECO_40-60,1D=SuperSpeed,1E=Schnelle_Wäsche,1F=Kaltwäsche_Intensiv,20=Hygiene-Dampf,21=Buntwäsche,22=Wolle,23=Outdoor,24=XXL-Wäsche,25=Pflegeleicht,26=Feinwäsche,27=Spülen+Schleudern,28=Abpumpen+Schleudern,29=Trommelreinigung+,2A=Jeans,2D=Super_Leise,2E=Baby_Care_Intensiv,2F=Sportkleidung,30=Bewölkter_Tag,32=Hemden,33=Handtücher',
@@ -482,6 +481,7 @@ sub SST_setDefaults($$) {
             'stateFormat' => 'switch',
             'devStateIcon' => 'on:ios-on-green:off off:ios-off:on',
             'cmdIcon' => 'on:rc_BLANK off:rc_BLANK2',
+            'eventMap' => '/switch on:on/switch off:off/'
         },
         'tv' => {
             'icon' => 'samsung_tv',
@@ -930,7 +930,7 @@ sub SST_getDeviceStatus($$) {
             # ENTRYPOINT new set options
             if( defined $ccc2cmd{$key} ){
                 $setList .= " $reading:$ccc2cmd{$key}"; 
-            }elsif( $key =~ m/_switch$/ ){
+            }elsif( $key =~ m/[_-]switch$/ ){
                 $setList .= " $reading:on,off"; 
             }elsif( $key =~ m/^main_refrigeration_rapid/ ){
                 $setList .= " $reading:On,Off"; # weirdly this is upper case on get, but lower case on set...
@@ -1467,7 +1467,7 @@ sub SST_getDeviceStatus($$) {
     F&uuml;r den Connector irrelevant.<br>
     Mit diesem Wert kann zwischen verschiedenen Ger&auml;tetypen der selben
     Ger&auml;teklasse unterschieden werden (derzeit nur f&uuml;r
-    Waschmaschienen).<br></li>
+    Waschmaschinen).<br></li>
 
     <a name="setList"></a>
     <li>setList<br>
