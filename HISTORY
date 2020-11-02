@@ -1,4 +1,11 @@
-2020-10-30 21:34:26 +0100 Version 0.7.23
+2020-11-02 17:48:28 +0100 Version 0.7.24
+2020-11-02 17:47:03 +0100 feature: prepared type specifc extensions
+2020-11-02 16:43:42 +0100 bugfix: removed switch from washers
+2020-11-02 16:34:53 +0100 bugfix: extended readings to level 6 hashes
+2020-11-02 08:50:12 +0100 bugfix: fixed perl warnings on empty deviceTypeName
+2020-11-02 08:37:33 +0100 bugfix: fixed perl warning Reference found
+2020-10-31 14:14:47 +0100 bugfix: fixed switch identification
+2020-10-30 21:34:32 +0100 Version 0.7.23
 2020-10-30 21:33:03 +0100 feature: added get x_default
 2020-10-30 21:11:07 +0100 feature: added readings_map_class
 2020-10-30 16:47:18 +0100 feature: added device type switch

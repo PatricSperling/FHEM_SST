@@ -1,11 +1,14 @@
 FHEM module SST last 3 changes:
+2020-11-02: Version 0.7.24
+ - feature: prepared type specifc extensions
+ - bugfix: removed switch from washers
+ - bugfix: extended readings to level 6 hashes
+ - bugfix: fixed perl warnings on empty deviceTypeName
+ - bugfix: fixed perl warning Reference found
+ - bugfix: fixed switch identification
 2020-10-30: Version 0.7.23
  - feature: added get x_default
  - feature: added readings_map_class
  - feature: added device type switch
 2020-10-27: Version 0.7.22
  - feature: showing data from execute-options as readings
-2020-10-27: Version 0.7.21
- - feature: extended known options list
- - bugfix: changed general default for discard_units to 1
- - bugfix: not all numbers are numbers on set commands
