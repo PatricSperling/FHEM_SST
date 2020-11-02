@@ -650,17 +650,21 @@ sub SST_getDeviceDetection($) {
                 # ENTRYPOINT new device types (1/4)
                 # try to determine the device type
                 my $subdevicetype = 'unknown';
-                if( $items->{items}[$i]->{name} =~ m/^\[(.*)\]/ ){
+                my $thisName   = '';
+                my $thisDTName = '';
+                $thisName   = $items->{items}[$i]->{name}           if defined $items->{items}[$i]->{name};
+                $thisDTName = $items->{items}[$i]->{deviceTypeName} if defined $items->{items}[$i]->{deviceTypeName};
+                if( $thisName =~ m/^\[(.*)\]/ ){
                     $subdevicetype = $1;
-                }elsif( $items->{items}[$i]->{deviceTypeName} =~ m/ OCF (.*)$/ ){
+                }elsif( $thisDTName =~ m/ OCF (.*)$/ ){
                     $subdevicetype = $1;
-                }elsif( $items->{items}[$i]->{deviceTypeName} =~ m/TV/ or $items->{items}[$i]->{name} =~ m/TV/ ){
+                }elsif( $thisDTName =~ m/TV/ or $thisName =~ m/TV/ ){
                     $subdevicetype = 'TV';
-                }elsif( $items->{items}[$i]->{deviceTypeName} =~ m/switch/ or $items->{items}[$i]->{name} =~ m/switch/ ){
+                }elsif( $thisDTName =~ m/switch/ or $thisName =~ m/switch/ ){
                     $subdevicetype = 'switch';
                 }else{
-                    $msg .= ' - cannot determine device type from name (' . $items->{items}[$i]->{name} . ') or deviceTypeName (' . $items->{items}[$i]->{deviceTypeName} . ').';
-                    Log3 $hash, 2, "SST ($device): get device_list - cannot determine device type from name (" . $items->{items}[$i]->{name} . ') or deviceTypeName (' . $items->{items}[$i]->{deviceTypeName} . ').';
+                    $msg .= " - cannot determine device type from name ($thisName) or deviceTypeName ($thisDTName).";
+                    Log3 $hash, 2, "SST ($device): get device_list - cannot determine device type from name ($thisName) or deviceTypeName ($thisDTName).";
                 }
                 $subdevicetype =~ s/[\s\/]/_/g;
 
