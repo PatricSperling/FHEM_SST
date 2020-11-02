@@ -870,6 +870,20 @@ sub SST_getDeviceStatus($$) {
                                 next if $attribute eq 'timestamp'; # who cares about timestamps ...
                                 next unless defined $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute}; # ... or empty elements ...
                                 next if $attribute eq 'unit' and not defined $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value}; # ... empty element's units
+                                if( ref( $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute} ) eq 'HASH' ){
+                                    # I should really put that in a bunch of subs...
+                                    foreach my $element ( keys %{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute} } ){
+                                        if( ref( $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute}->{$element} ) eq '' ){
+                                            my $reading = makeReadingName( $component . '_' . $capability . '_' . $module . '--' . $attribute . '-' . $element );
+                                            $readings{$reading} = $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute}->{$element};
+                                        }else{
+                                            Log3 $hash, 3, "SST ($device): get $modus - unexpected reading at element level: "
+                                                . "$baselevel/$component/$capability/$module/$attribute - element of type "
+                                                . ref( $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute}->{$element} );
+                                        }
+                                    }
+                                    next;
+                                }
                                 Log3 $hash, 3, "SST ($device): get $modus - unexpected reading at attribute level: $baselevel/$component/$capability/$module/$attribute of type " . ref( $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{$attribute} );
                                 # TODO: propably extend interpretation if someone gets even more info
                             } # foreach attribute
