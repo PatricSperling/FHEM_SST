@@ -1,6 +1,6 @@
 ################################################################################
 # 48_SST.pm
-#   Version 0.7.23 (2020-10-30)
+#   Version 0.7.24 (2020-11-02)
 #
 # SYNOPSIS
 #   Samsung SmartThings Connecton Module for FHEM
@@ -71,6 +71,7 @@ sub SST_Initialize($) {
         'setList_static',
         'set_timeout',
         'readings_map_class:Table_00_Course_,Table_02_Course_',
+        'washer_family:Table_00_Course_,Table_02_Course_',
     );
     $hash->{AttrList} = join(" ", @attrList)." ".$readingFnAttributes;
 }
