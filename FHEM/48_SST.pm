@@ -453,11 +453,11 @@ sub SST_setDefaults($$) {
     # ENTRYPOINT new device types (3/4)
     my $predefines = {
         'connector' => {
-            'icon' => 'samsung_smartthings',
+            'icon' => 'samsung_smartthings'
         },
         'refrigerator' => {
             'icon' => 'samsung_sidebyside',
-            'stateFormat' => 'cooler_temperature °C (cooler_contact)<br>\nfreezer_temperature °C (freezer_contact)',
+            'stateFormat' => 'cooler_temperature °C (cooler_contact)<br>\nfreezer_temperature °C (freezer_contact)'
         },
         'room_a_c' => {
             'icon' => 'samsung_ac',
@@ -465,7 +465,7 @@ sub SST_setDefaults($$) {
             'setList_static' => 'fanOscillationMode:all,fixed,horizontal,vertical',
             'readings_map' => 'switch:on=an,off=aus',
             'devStateIcon' => 'on:ios-on-green:off off:ios-off:on',
-            'cmdIcon' => 'on:rc_BLANK off:rc_BLANK2',
+            'cmdIcon' => 'on:rc_BLANK off:rc_BLANK2'
         },
         'washer' => {
             'icon' => 'scene_washing_machine',
@@ -474,7 +474,7 @@ sub SST_setDefaults($$) {
             'readings_map:Table_00_Course_' => 'washerCycle:5B=Baumwolle,5C=Schnelle_Wäsche,63=Trommelreinigung,65=Wolle,67=Synthetik',
             'readings_map:Table_02_Course_' => 'washerCycle:1B=Baumwolle,1C=ECO_40-60,1D=SuperSpeed,1E=Schnelle_Wäsche,1F=Kaltwäsche_Intensiv,20=Hygiene-Dampf,21=Buntwäsche,22=Wolle,23=Outdoor,24=XXL-Wäsche,25=Pflegeleicht,26=Feinwäsche,27=Spülen+Schleudern,28=Abpumpen+Schleudern,29=Trommelreinigung+,2A=Jeans,2D=Super_Leise,2E=Baby_Care_Intensiv,2F=Sportkleidung,30=Bewölkter_Tag,32=Hemden,33=Handtücher',
             'devStateIcon' => 'on:ios-on-green:off off:ios-off:on',
-            'cmdIcon' => 'on:rc_BLANK off:rc_BLANK2',
+            'cmdIcon' => 'on:rc_BLANK off:rc_BLANK2'
         },
         'switch' => {
             'icon' => 'ios-NACK',
@@ -487,10 +487,10 @@ sub SST_setDefaults($$) {
             'icon' => 'samsung_tv',
             'stateFormat' => 'switch',
             'devStateIcon' => 'on:ios-on-green:off off:ios-off:on',
-            'cmdIcon' => 'on:rc_BLANK off:rc_BLANK2',
+            'cmdIcon' => 'on:rc_BLANK off:rc_BLANK2'
         },
         'vacuumCleaner' => {
-            'icon' => 'vacuum_top',
+            'icon' => 'vacuum_top'
         }
     };
 
@@ -654,12 +654,12 @@ sub SST_getDeviceDetection($) {
                     $subdevicetype = $1;
                 }elsif( $items->{items}[$i]->{deviceTypeName} =~ m/ OCF (.*)$/ ){
                     $subdevicetype = $1;
-                }elsif( $items->{items}[$i]->{deviceTypeName} =~ m/TV/ ){
+                }elsif( $items->{items}[$i]->{deviceTypeName} =~ m/TV/ or $items->{items}[$i]->{name} =~ m/TV/ ){
                     $subdevicetype = 'TV';
-                }elsif( $items->{items}[$i]->{deviceTypeName} =~ m/switch/ ){
+                }elsif( $items->{items}[$i]->{deviceTypeName} =~ m/switch/ or $items->{items}[$i]->{name} =~ m/switch/ ){
                     $subdevicetype = 'switch';
                 }else{
-                    $msg .= 'cannot determine device type from name (' . $items->{items}[$i]->{name} . ') or deviceTypeName (' . $items->{items}[$i]->{deviceTypeName} . ').';
+                    $msg .= ' - cannot determine device type from name (' . $items->{items}[$i]->{name} . ') or deviceTypeName (' . $items->{items}[$i]->{deviceTypeName} . ').';
                     Log3 $hash, 2, "SST ($device): get device_list - cannot determine device type from name (" . $items->{items}[$i]->{name} . ') or deviceTypeName (' . $items->{items}[$i]->{deviceTypeName} . ').';
                 }
                 $subdevicetype =~ s/[\s\/]/_/g;
@@ -755,12 +755,12 @@ sub SST_getDeviceStatus($$) {
 
     # ENTRYPOINT new options
     my %setpointrange = ();
-    my %option2reading = {
+    my $option2reading = {
         'custom.airConditionerOptionalMode' => 'acOptionalMode',
-        #'custom.supportedOptions' => 'washerCycle',
+        'custom.supportedOptions' => 'washerCycle',
         'custom.washerRinseCycles' => 'washerRinseCycles',
         'custom.washerSpinLevel' => 'washerSpinLevel',
-        'custom.washerWaterTemperature' => 'washerWaterTemperature',
+        'custom.washerWaterTemperature' => 'washerWaterTemperature'
     };
 
     # parse JSON struct
@@ -815,8 +815,8 @@ sub SST_getDeviceStatus($$) {
                                     # this might always indicate value options... let's assume that for the time being
                                     push @setListHints, $component . '_' . $capability . ':' . join( ',', @{ $jsonhash->{$baselevel}->{$component}->{$capability}->{$module}->{value} } );
                                     # heed mapping
-                                    if( defined $option2reading{$module} ){
-                                        $reading = makeReadingName( $component . '_' . $capability . '_' . $option2reading{$module} );
+                                    if( defined $option2reading->{$module} ){
+                                        $reading = makeReadingName( $component . '_' . $capability . '_' . $option2reading->{$module} );
                                     }else{
                                         # adapt reading name hope this will always work...
                                         $reading = makeReadingName( $component . '_' . $capability . '_' . $capability );
@@ -930,7 +930,7 @@ sub SST_getDeviceStatus($$) {
             # ENTRYPOINT new set options
             if( defined $ccc2cmd{$key} ){
                 $setList .= " $reading:$ccc2cmd{$key}"; 
-            }elsif( $key =~ m/[_-]switch$/ ){
+            }elsif( $key =~ m/_switch$/ ){
                 $setList .= " $reading:on,off"; 
             }elsif( $key =~ m/^main_refrigeration_rapid/ ){
                 $setList .= " $reading:On,Off"; # weirdly this is upper case on get, but lower case on set...
